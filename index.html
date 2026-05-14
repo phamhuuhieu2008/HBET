@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIEUBET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="min-h-screen text-white pb-24 bg-black">
+
+    <!-- Auth Container (Đăng ký/Đăng nhập) -->
+    <div id="authContainer" class="fixed inset-0 z-[1000] bg-black/95 flex items-center justify-center p-4">
+        <div class="w-full max-w-[400px] auth-card rounded-3xl p-8 border border-yellow-400/20 shadow-2xl">
+            <div class="text-center mb-8">
+                <span class="text-5xl font-black sunwin-gold tracking-tighter inline-block">HIEUBET</span>
+                <p class="text-gray-400 text-sm mt-2" id="authTitle">Đăng nhập để bắt đầu trải nghiệm</p>
+            </div>
+
+            <div id="loginForm" class="space-y-4">
+                <input type="text" id="loginUser" placeholder="Tên đăng nhập"
+                    class="w-full bg-black border border-gray-700 rounded-xl p-4 outline-none focus:border-yellow-400">
+                <input type="password" id="loginPass" placeholder="Mật khẩu"
+                    class="w-full bg-black border border-gray-700 rounded-xl p-4 outline-none focus:border-yellow-400">
+                <button type="button" id="loginBtn"
+                    class="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-300 transition shadow-lg shadow-yellow-400/20">ĐĂNG
+                    NHẬP</button>
+                <p class="text-center text-sm text-gray-500">Chưa có tài khoản? <a href="#" onclick="toggleAuth(true)"
+                        class="text-yellow-400">Đăng ký ngay</a></p>
+            </div>
+
+            <div id="registerForm" class="space-y-4 hidden">
+                <input type="text" id="regUser" placeholder="Tên đăng nhập mới"
+                    class="w-full bg-black border border-gray-700 rounded-xl p-4 outline-none focus:border-yellow-400">
+                <input type="password" id="regPass" placeholder="Mật khẩu"
+                    class="w-full bg-black border border-gray-700 rounded-xl p-4 outline-none focus:border-yellow-400">
+                <input type="password" id="regPassConfirm" placeholder="Nhập lại mật khẩu"
+                    class="w-full bg-black border border-gray-700 rounded-xl p-4 outline-none focus:border-yellow-400">
+                <button type="button" id="registerBtn"
+                    class="w-full bg-green-500 text-white font-bold py-4 rounded-xl hover:bg-green-400 transition shadow-lg shadow-green-500/20">ĐĂNG
+                    KÝ TÀI KHOẢN</button>
+                <p class="text-center text-sm text-gray-500">Đã có tài khoản? <a href="#" onclick="toggleAuth(false)"
+                        class="text-yellow-400">Đăng nhập</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameContainer" class="max-w-[430px] mx-auto hidden">
+
+        <!-- Header -->
+        <div class="bg-black/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-yellow-400/20">
+            <div class="max-w-[430px] mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-3xl font-black sunwin-gold tracking-tighter inline-block">HIEUBET</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center bg-zinc-900 px-4 py-1 rounded-full border border-yellow-400/20">
+                        <i class="fa-solid fa-coins text-yellow-400 mr-2"></i>
+                        <span id="balance" class="font-bold">500,000</span>
+                    </div>
+                    <!-- Admin Button -->
+                    <button id="adminBtn" onclick="openModal('adminModal')"
+                        class="hidden bg-red-600 p-2 rounded-lg text-white text-xs font-bold animate-pulse">
+                        ADMIN
+                    </button>
+                    <button onclick="handleLogout()" class="text-gray-300 hover:text-white transition">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-24 px-4 pb-12">
+            <!-- Nạp/Rút Buttons -->
+            <div class="grid grid-cols-3 gap-2 mb-6 text-[10px]">
+                <button onclick="openModal('depositModal')"
+                    class="bg-gradient-to-b from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white font-bold py-2 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all active:scale-95 border border-emerald-400/20">
+                    <i class="fa-solid fa-plus-circle"></i> NẠP TIỀN
+                </button>
+                <button onclick="openModal('withdrawModal')"
+                    class="bg-gradient-to-b from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 text-white font-bold py-2 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all active:scale-95 border border-blue-400/20">
+                    <i class="fa-solid fa-money-bill-transfer"></i> RÚT TIỀN
+                </button>
+                <button onclick="openModal('historyModal')"
+                    class="bg-gradient-to-b from-zinc-700 to-zinc-900 hover:from-zinc-600 hover:to-zinc-800 text-white font-bold py-2 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all active:scale-95 border border-zinc-500/20">
+                    <i class="fa-solid fa-clock-rotate-left"></i> LỊCH SỬ
+                </button>
+            </div>
+
+            <h1 class="text-2xl font-black text-center mb-6 sunwin-gold tracking-widest italic inline-block w-full">
+                PREMIUM CASINO</h1>
+
+            <!-- Countdown Timer -->
+            <div class="text-center mb-6 bg-zinc-900/80 py-3 rounded-3xl border-2 border-yellow-400/30 shadow-inner">
+                <div class="text-[10px] text-gray-400 uppercase tracking-widest">Thời gian đặt cược</div>
+                <div id="countdown"
+                    class="text-5xl font-black text-yellow-400 font-mono drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">40
+                </div>
+            </div>
+
+            <!-- Plate Battle Area -->
+            <div class="casino-surface p-4 mb-8">
+                <div class="plate-container flex flex-col items-center">
+                    <div id="mainPlate"
+                        class="flex items-center gap-2 bg-black/50 p-6 rounded-full border-2 border-yellow-500/20 shadow-inner transition-all duration-500 mx-auto">
+                        <!-- Cái Bát che xúc xắc -->
+                        <div id="bowl" class="bowl"></div>
+                        <!-- Dice containers -->
+                        <div class="dice-wrapper">
+                            <div id="dice1" class="cube">
+                                <div class="face-1"><span class="pip"></span></div>
+                                <div class="face-2"><span class="pip"></span><span class="pip"></span></div>
+                                <div class="face-3"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span></div>
+                                <div class="face-4"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span><span class="pip"></span></div>
+                                <div class="face-5"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+                                <div class="face-6"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span></div>
+                            </div>
+                        </div>
+                        <div class="dice-wrapper">
+                            <div id="dice2" class="cube">
+                                <div class="face-1"><span class="pip"></span></div>
+                                <div class="face-2"><span class="pip"></span><span class="pip"></span></div>
+                                <div class="face-3"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span></div>
+                                <div class="face-4"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span><span class="pip"></span></div>
+                                <div class="face-5"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+                                <div class="face-6"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span></div>
+                            </div>
+                        </div>
+                        <div class="dice-wrapper">
+                            <div id="dice3" class="cube">
+                                <div class="face-1"><span class="pip"></span></div>
+                                <div class="face-2"><span class="pip"></span><span class="pip"></span></div>
+                                <div class="face-3"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span></div>
+                                <div class="face-4"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span><span class="pip"></span></div>
+                                <div class="face-5"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+                                <div class="face-6"><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span><span class="pip"></span><span class="pip"></span><span
+                                        class="pip"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Side Selection & Bet Input -->
+                <div class="mt-8 space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col items-center gap-2">
+                            <button type="button" onclick="selectSide('left')" id="btnLeft"
+                                class="bet-button w-full py-4 rounded-2xl font-black text-xl transition active:scale-95 text-gray-400">ĐẶT
+                                XỈU</button>
+                            <span id="placedBetXiu"
+                                class="text-green-400 font-bold text-xl hidden drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]"></span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2">
+                            <button type="button" onclick="selectSide('right')" id="btnRight"
+                                class="bet-button w-full py-4 rounded-2xl font-black text-xl transition active:scale-95 text-gray-400">ĐẶT
+                                TÀI</button>
+                            <span id="placedBetTai"
+                                class="text-green-400 font-bold text-xl hidden drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]"></span>
+                        </div>
+                    </div>
+                    <input type="number" id="betAmount" value="10000" step="1000"
+                        class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center text-xl font-bold text-yellow-400 outline-none focus:border-yellow-400/50"
+                        placeholder="Số tiền cược...">
+                    <button id="playBtn" type="button"
+                        class="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl text-xl shadow-lg shadow-yellow-400/30 transition active:scale-95">
+                        ĐẶT CƯỢC
+                    </button>
+                </div>
+
+                <div id="result" class="text-center mt-4 font-bold text-lg h-8"></div>
+            </div>
+
+            <div class="text-center mt-8 text-sm text-gray-400">
+                Số dư: <span id="balance2" class="text-yellow-400 font-bold">500,000</span> VND
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="fixed bottom-0 left-0 right-0 bg-black border-t border-white/10">
+        <div class="max-w-[430px] mx-auto flex justify-around py-3 text-xs">
+            <div class="flex flex-col items-center text-yellow-400">
+                <i class="fa-solid fa-house"></i>
+                <span>Trang chủ</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <i class="fa-solid fa-gamepad"></i>
+                <span>Game</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <i class="fa-solid fa-trophy"></i>
+                <span>Xổ số</span>
+            </div>
+            <div class="flex flex-col items-center cursor-pointer" onclick="openModal('profileModal')">
+                <i class="fa-solid fa-user"></i>
+                <span>Tôi</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nạp Tiền -->
+    <div id="depositModal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 w-full max-w-sm rounded-3xl border border-yellow-400/30 overflow-hidden">
+            <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 p-4 flex justify-between items-center">
+                <h3 class="font-bold text-black text-lg">NẠP TIỀN QUA NGÂN HÀNG</h3>
+                <button onclick="closeModal('depositModal')" class="text-black"><i
+                        class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <div id="depositStep1">
+                    <label class="block text-sm text-gray-400 mb-2">Nhập số tiền muốn nạp (VND):</label>
+                    <input type="number" id="depositAmount"
+                        class="w-full bg-black border border-gray-700 rounded-xl p-4 text-xl font-bold text-yellow-400 mb-4 focus:border-yellow-400 outline-none"
+                        placeholder="Ví dụ: 100000">
+                    <button onclick="showTransferInfo()"
+                        class="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-300 transition">TIẾP
+                        TỤC</button>
+                </div>
+
+                <div id="depositStep2" class="hidden">
+                    <!-- QR Code -->
+                    <div class="flex justify-center mb-4 bg-white p-2 rounded-2xl">
+                        <img id="qrCodeImg" src="image.png" alt="Đang tải mã QR..." class="w-48 h-48 object-contain">
+                    </div>
+
+                    <div class="bg-black/50 rounded-2xl p-4 space-y-3 border border-dashed border-gray-600">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Ngân hàng:</span>
+                            <span class="font-bold text-white">MB BANK</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Số tài khoản:</span>
+                            <span class="font-bold text-yellow-400 tracking-wider">0934761108</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Chủ TK:</span>
+                            <span class="font-bold text-white uppercase">PHAM HUU HIEU</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Số tiền:</span>
+                            <span id="displayDepositAmount" class="font-bold text-green-400">0đ</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Nội dung:</span>
+                            <span id="transferCode" class="font-bold text-yellow-400">HBET888</span>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-yellow-500 mt-4 italic text-center text-balance">
+                        <i class="fa-solid fa-circle-info"></i> Sau khi chuyển khoản, bấm nút bên dưới. Hệ thống sẽ kiểm
+                        tra tài khoản ngân hàng và cộng tiền tự động sau 3-5 giây.
+                    </p>
+                    <button onclick="confirmDeposit(this)"
+                        class="w-full mt-2 bg-green-500 text-white font-bold py-4 rounded-xl hover:bg-green-400 transition flex items-center justify-center gap-2 border-b-4 border-green-700">XÁC
+                        NHẬN ĐÃ CHUYỂN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Rút Tiền -->
+    <div id="withdrawModal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 w-full max-w-sm rounded-3xl border border-blue-400/30 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 flex justify-between items-center">
+                <h3 class="font-bold text-white text-lg">RÚT TIỀN VỀ NGÂN HÀNG</h3>
+                <button onclick="closeModal('withdrawModal')" class="text-white"><i
+                        class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Ngân hàng thụ hưởng:</label>
+                    <select id="withdrawBank"
+                        class="w-full bg-black border border-gray-700 rounded-xl p-3 text-white outline-none">
+                        <option>Vietcombank</option>
+                        <option>MB Bank</option>
+                        <option>Techcombank</option>
+                        <option>Momo</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Tên chủ tài khoản:</label>
+                    <input type="text" id="withdrawHolder"
+                        class="w-full bg-black border border-gray-700 rounded-xl p-3 text-white outline-none"
+                        placeholder="VÍ DỤ: NGUYEN VAN A">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Số tài khoản / Số điện thoại:</label>
+                    <input type="text" id="withdrawNumber"
+                        class="w-full bg-black border border-gray-700 rounded-xl p-3 text-white outline-none"
+                        placeholder="Nhập STK của bạn">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Số tiền rút (VND):</label>
+                    <input type="number" id="withdrawAmount"
+                        class="w-full bg-black border border-gray-700 rounded-xl p-3 text-xl font-bold text-blue-400 outline-none"
+                        placeholder="Tối thiểu 50,000">
+                </div>
+                <button type="button" onclick="handleWithdraw()"
+                    class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-500 transition shadow-lg">GỬI
+                    LỆNH RÚT TIỀN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Admin -->
+    <div id="adminModal" class="fixed inset-0 bg-black/90 z-[150] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-zinc-900 w-full max-w-md rounded-3xl border border-red-500/50 overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="bg-red-600 p-4 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-white tracking-widest">QUẢN TRỊ VIÊN</h3>
+                    <button onclick="refreshAdminData()"
+                        class="bg-white/20 hover:bg-white/40 p-1.5 rounded-lg transition" title="Làm mới dữ liệu">
+                        <i class="fa-solid fa-rotate text-xs text-white"></i>
+                    </button>
+                </div>
+                <button onclick="closeModal('adminModal')" class="text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- Điều khiển kết quả -->
+                <div>
+                    <p class="text-gray-400 text-xs mb-3 uppercase font-bold text-red-400">Duyệt nạp tiền (Chờ xử lý)
+                    </p>
+                    <div id="adminDepositList" class="space-y-2 mb-6">
+                        <!-- Deposit requests injected here -->
+                    </div>
+
+                    <p class="text-gray-400 text-xs mb-3 uppercase font-bold text-blue-400">Duyệt rút tiền (Chờ xử lý)
+                    </p>
+                    <div id="adminWithdrawList" class="space-y-2 mb-6">
+                        <!-- Withdraw requests injected here -->
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-gray-400 text-xs mb-3 uppercase font-bold">Điều khiển kết quả phiên tới</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setAdminResult('left')" id="ctrlLeft"
+                            class="bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700">XỈU
+                            THẮNG</button>
+                        <button onclick="setAdminResult('random')" id="ctrlRandom"
+                            class="bg-blue-600 py-3 rounded-xl text-xs font-bold border border-blue-400">NGẪU
+                            NHIÊN</button>
+                        <button onclick="setAdminResult('right')" id="ctrlRight"
+                            class="bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700">TÀI
+                            THẮNG</button>
+                    </div>
+                </div>
+
+                <!-- Quản lý người dùng -->
+                <div>
+                    <p class="text-gray-400 text-xs mb-3 uppercase font-bold">Danh sách người dùng</p>
+                    <div id="adminUserList" class="space-y-2">
+                        <!-- User items injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Trang Cá Nhân -->
+    <div id="profileModal" class="fixed inset-0 bg-black/90 z-[150] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-zinc-900 w-full max-w-md rounded-3xl border border-yellow-400/30 overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="bg-zinc-800 p-4 flex justify-between items-center border-b border-white/10">
+                <h3 class="font-bold text-yellow-400 uppercase">Trang Cá Nhân</h3>
+                <button onclick="closeModal('profileModal')" class="text-white"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- Avatar Section -->
+                <div class="flex flex-col items-center gap-4">
+                    <div class="relative">
+                        <img id="profileAvatarPreview" src="https://ui-avatars.com/api/?name=User&background=random"
+                            class="w-24 h-24 rounded-full border-4 border-yellow-400 object-cover bg-zinc-800">
+                        <label for="avatarInput"
+                            class="absolute bottom-0 right-0 bg-yellow-400 text-black p-2 rounded-full cursor-pointer hover:bg-yellow-300 transition">
+                            <i class="fa-solid fa-camera text-sm"></i>
+                        </label>
+                        <input type="file" id="avatarInput" class="hidden" accept="image/*"
+                            onchange="previewAvatar(this)">
+                    </div>
+                    <div class="text-center">
+                        <p id="profileUsername" class="text-xl font-black sunwin-gold inline-block">USERNAME</p>
+                        <p class="text-gray-400 text-sm">Thành viên HIEUBET</p>
+                    </div>
+                </div>
+
+                <!-- Info Section -->
+                <div class="space-y-4">
+                    <div class="bg-black/40 p-4 rounded-2xl border border-white/5">
+                        <p class="text-gray-500 text-[10px] uppercase mb-1">Số dư tài khoản</p>
+                        <p class="text-2xl font-bold text-yellow-400"><span id="profileBalance">0</span> đ</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-2 uppercase">Họ và tên</label>
+                        <input type="text" id="profileFullName"
+                            class="w-full bg-black border border-gray-700 rounded-xl p-3 text-white outline-none focus:border-yellow-400"
+                            placeholder="Nhập tên của bạn">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-2 uppercase">Số điện thoại</label>
+                        <input type="text" id="profilePhone"
+                            class="w-full bg-black border border-gray-700 rounded-xl p-3 text-white outline-none focus:border-yellow-400"
+                            placeholder="0xxx xxx xxx">
+                    </div>
+                </div>
+
+                <button type="button" onclick="saveProfile(this)"
+                    class="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-300 transition shadow-lg">LƯU
+                    THAY ĐỔI</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Lịch Sử -->
+    <div id="historyModal" class="fixed inset-0 bg-black/90 z-[150] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-zinc-900 w-full max-w-md rounded-3xl border border-yellow-400/30 overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="bg-zinc-800 p-4 flex justify-between items-center border-b border-white/10">
+                <h3 class="font-bold text-yellow-400">LỊCH SỬ HOẠT ĐỘNG</h3>
+                <button onclick="closeModal('historyModal')" class="text-white"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex border-b border-white/10">
+                <button onclick="switchHistoryTab('bet')" id="tabBet"
+                    class="flex-1 py-3 text-sm font-bold border-b-2 border-yellow-400 text-yellow-400">CƯỢC</button>
+                <button onclick="switchHistoryTab('withdraw')" id="tabWithdraw"
+                    class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-gray-500">RÚT TIỀN</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1">
+                <div id="betHistoryList" class="space-y-2">
+                    <!-- Cược nạp ở đây -->
+                </div>
+                <div id="withdrawHistoryList" class="space-y-2 hidden">
+                    <!-- Rút nạp ở đây -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hệ thống Thông báo Toast -->
+    <div id="toast"
+        class="fixed top-24 left-1/2 -translate-x-1/2 z-[200] hidden px-8 py-4 rounded-full font-bold shadow-2xl transition-all duration-300 text-white">
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
