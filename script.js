@@ -5,6 +5,8 @@ let currentUser = null;
 let balance = 0;
 let betHistory = [];
 let withdrawHistory = [];
+let displayedHistory = [];
+let historyUpdateTimeout = null;
 
 // Trạng thái trò chơi toàn cục
 let timeLeft = 40, timerInterval = null, hasBet = false, sideBet = null, amountBet = 0;
@@ -213,6 +215,27 @@ function startTimer() {
         if (res.betHistory) betHistory = res.betHistory;
         if (res.withdrawHistory) withdrawHistory = res.withdrawHistory;
 
+        // Logic cập nhật biểu đồ soi cầu trễ 14 giây
+        if (res.gameHistory) {
+            if (displayedHistory.length === 0) {
+                displayedHistory = [...res.gameHistory];
+                renderHistoryChart(displayedHistory);
+            } else {
+                const serverLast = res.gameHistory[res.gameHistory.length - 1];
+                const displayedLast = displayedHistory[displayedHistory.length - 1];
+
+                if (res.gameHistory.length !== displayedHistory.length || serverLast !== displayedLast) {
+                    if (!historyUpdateTimeout) {
+                        historyUpdateTimeout = setTimeout(() => {
+                            displayedHistory = [...res.gameHistory];
+                            renderHistoryChart(displayedHistory);
+                            historyUpdateTimeout = null;
+                        }, 14000);
+                    }
+                }
+            }
+        }
+
         timeLeft = res.timeLeft;
         const currentPhase = res.phase;
         updateTimerDisplay();
@@ -235,9 +258,39 @@ function startTimer() {
     }, 1000);
 }
 
+function renderHistoryChart(history) {
+    const container = document.getElementById('gameHistoryChart');
+    const statsEl = document.getElementById('historyStats');
+    if (!container) return;
+
+    let taiCount = 0;
+    let xiuCount = 0;
+
+    container.innerHTML = history.map(res => {
+        const isTai = res === 'tai';
+        if (isTai) taiCount++; else xiuCount++;
+
+        const bgColor = isTai ? 'bg-red-500' : 'bg-white';
+        const textColor = isTai ? 'text-white' : 'text-black';
+        const label = isTai ? 'T' : 'X';
+
+        return `<div class="w-6 h-6 rounded-full ${bgColor} ${textColor} flex items-center justify-center text-[10px] font-bold shadow-sm ring-1 ring-black/20">${label}</div>`;
+    }).join('');
+
+    // Cập nhật thống kê
+    if (statsEl) {
+        statsEl.textContent = `Tài: ${taiCount} | Xỉu: ${xiuCount}`;
+    }
+}
+
 function resetGameUI() {
     if (autoOpenTimeout) { clearTimeout(autoOpenTimeout); autoOpenTimeout = null; }
     isOpening = false; hasBet = false; sideBet = null; selectedSide = null; currentBetId = null; resultFetched = false;
+
+    // Đảm bảo biểu đồ được cập nhật ngay khi reset UI (nếu có dữ liệu)
+    // if (lastHistoryData.length > 0) {
+    //     renderHistoryChart(lastHistoryData);
+    // }
 
     const btn = document.getElementById('playBtn');
     if (btn) {
@@ -348,29 +401,36 @@ async function sendResolveBetToServer(bid) {
         autoOpenTimeout = setTimeout(() => {
             const bowl = document.getElementById('bowl');
             if (bowl && !bowl.classList.contains('open')) bowl.classList.add('open');
-        }, 5000);
+        }, 6000); // Trễ 6 giây sau khi có kết quả để khớp với hiệu ứng lắc
 
         balance = newBal;
         betHistory = newHist;
         updateBalanceDisplay();
 
-        const resultEl = document.getElementById('result');
-        if (hasBet) {
-            const lastBet = newHist.find(b => b.id == bid);
-            if (lastBet && lastBet.result === 'Thắng') {
-                resultEl.innerHTML = `<span class="text-green-400">🎉 THẮNG +${lastBet.winAmount.toLocaleString()}đ</span>`;
-            } else {
-                resultEl.innerHTML = `<span class="text-red-400 font-bold">THUA!</span>`;
+        // Hiển thị kết quả số ngay dưới chỗ đặt cược sau khi mở bát (6 giây)
+        setTimeout(() => {
+            const resultEl = document.getElementById('result');
+            if (!resultEl) return;
+
+            let resultText = `<div class="text-yellow-400 font-black text-3xl animate-bounce">TỔNG: ${total}</div>`;
+
+            if (hasBet) {
+                const lastBet = newHist.find(b => b.id == bid);
+                if (lastBet && lastBet.result === 'Thắng') {
+                    resultText += `<div class="text-green-400 font-bold mt-1">🎉 CHÚC MỪNG +${lastBet.winAmount.toLocaleString()}đ</div>`;
+                } else {
+                    resultText += `<div class="text-red-500 font-bold mt-1">HẸN BẠN PHIÊN SAU!</div>`;
+                }
             }
-        } else {
-            resultEl.innerHTML = `<span class="text-yellow-400 font-bold">TỔNG: ${total}</span>`;
-        }
+            resultEl.innerHTML = resultText;
+        }, 6000);
     }
 }
 
 function updateBalanceDisplay() {
     document.getElementById('balance').textContent = balance.toLocaleString();
-    document.getElementById('balance2').textContent = balance.toLocaleString();
+    const bal2 = document.getElementById('balance2');
+    if (bal2) bal2.textContent = balance.toLocaleString();
 }
 
 function openModal(id) {

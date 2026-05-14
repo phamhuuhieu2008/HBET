@@ -88,6 +88,7 @@ let withdraws = loadData(WITHDRAWS_FILE, []);
 
 let nextResultOverride = 'random';
 let currentResult = { dice: [1, 2, 3], total: 6 };
+let gameHistory = []; // Lưu trữ 24 phiên gần nhất
 
 // --- HỆ THỐNG THỜI GIAN TOÀN CỤC VÀ TRẠNG THÁI GAME ---
 let gameState = {
@@ -116,6 +117,11 @@ setInterval(() => {
             else { rollDice(); }
 
             currentResult = { dice: [d1, d2, d3], total: d1 + d2 + d3 };
+
+            // Lưu vào lịch sử cầu
+            gameHistory.push((currentResult.total >= 4 && currentResult.total <= 10) ? 'xiu' : 'tai');
+            if (gameHistory.length > 24) gameHistory.shift();
+
             nextResultOverride = 'random';
         } else {
             gameState.phase = 'betting';
@@ -145,7 +151,8 @@ app.get('/api/game-state', (req, res) => {
         balance: userBalance,
         isLocked: isLocked,
         betHistory,
-        withdrawHistory
+        withdrawHistory,
+        gameHistory // Gửi lịch sử cầu về cho client
     });
 });
 

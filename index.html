@@ -101,6 +101,17 @@
                 </div>
             </div>
 
+            <!-- Biểu đồ lịch sử cầu (Soi cầu) -->
+            <div class="mb-6 bg-zinc-900/50 p-3 rounded-2xl border border-white/5">
+                <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-2 flex justify-between px-1">
+                    <span>Lịch sử phiên</span>
+                    <span id="historyStats" class="text-yellow-500/50"></span>
+                </div>
+                <div id="gameHistoryChart" class="flex flex-wrap gap-2 justify-start items-center min-h-[32px]">
+                    <!-- Các hạt cầu sẽ được render ở đây -->
+                </div>
+            </div>
+
             <!-- Plate Battle Area -->
             <div class="casino-surface p-4 mb-8">
                 <div class="plate-container flex flex-col items-center">
@@ -184,7 +195,7 @@
                     </button>
                 </div>
 
-                <div id="result" class="text-center mt-4 font-bold text-lg h-8"></div>
+                <div id="result" class="text-center mt-4 font-bold text-lg min-h-[60px]"></div>
             </div>
 
             <div class="text-center mt-8 text-sm text-gray-400">
