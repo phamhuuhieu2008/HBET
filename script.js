@@ -12,7 +12,10 @@ let historyUpdateTimeout = null;
 let timeLeft = 40, timerInterval = null, hasBet = false, sideBet = null, amountBet = 0;
 let currentBetId = null, isOpening = false, lastPhase = 'betting', resultFetched = false;
 let autoOpenTimeout = null;
-
+let visualLoopInterval = null;
+// Biến để lưu trữ giá trị tổng cược hiện tại đang hiển thị trên UI (cho hiệu ứng nhảy số)
+let currentDisplayedXiu = 0;
+let currentDisplayedTai = 0;
 // Tự động nhận diện API: 
 // Nếu chạy ở localhost nhưng sai cổng (ví dụ Live Server 5500) thì trỏ về 3000.
 // Nếu chạy trên Web (Render) thì dùng đường dẫn tương đối "".
@@ -39,6 +42,28 @@ async function fetchData(endpoint, options = {}) {
             }
             return { success: false, message: "Lỗi kết nối server." };
         });
+}
+
+/**
+ * Hàm tạo hiệu ứng số nhảy mượt mà
+ * @param {HTMLElement} element - Phần tử DOM để cập nhật textContent
+ * @param {number} start - Giá trị bắt đầu
+ * @param {number} end - Giá trị kết thúc
+ * @param {number} duration - Thời gian animation (ms)
+ */
+function animateNumber(element, start, end, duration) {
+    let startTime = null;
+
+    const step = (currentTime) => {
+        if (!startTime) startTime = currentTime;
+        const progress = Math.min((currentTime - startTime) / duration, 1);
+        const currentValue = Math.floor(progress * (end - start) + start);
+        element.textContent = currentValue.toLocaleString();
+
+        if (progress < 1) requestAnimationFrame(step);
+        else element.textContent = end.toLocaleString(); // Đảm bảo giá trị cuối cùng chính xác
+    };
+    requestAnimationFrame(step);
 }
 
 function toggleAuth(e, isRegister) {
@@ -116,6 +141,22 @@ function initGame() {
 }
 
 function handleLogout() { localStorage.removeItem('sunwin_session'); location.reload(); }
+
+function switchAdminTab(tab) {
+    const tabs = ['transactions', 'control', 'users'];
+    tabs.forEach(t => {
+        const btn = document.getElementById(`tabAdmin${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const content = document.getElementById(`adminContent${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (!btn || !content) return;
+        if (t === tab) {
+            btn.className = 'flex-1 py-3 text-[10px] font-black border-b-2 border-red-500 text-white';
+            content.classList.remove('hidden');
+        } else {
+            btn.className = 'flex-1 py-3 text-[10px] font-black border-b-2 border-transparent text-gray-500';
+            content.classList.add('hidden');
+        }
+    });
+}
 
 // Khởi tạo ứng dụng
 document.addEventListener('DOMContentLoaded', async () => {
@@ -255,7 +296,58 @@ function startTimer() {
             }
         }
         lastPhase = currentPhase;
+
+        // Luôn cập nhật số hiển thị từ Server gửi về
+        if (res.totalBets) {
+            syncTotalBets(res.totalBets.left, res.totalBets.right);
+        }
     }, 1000);
+
+    // Khởi tạo vòng lặp ảo nhảy số siêu nhanh (150ms)
+    if (!visualLoopInterval) {
+        visualLoopInterval = setInterval(runVirtualBetLoop, 150);
+    }
+}
+
+function syncTotalBets(serverLeft, serverRight) {
+    const xiuEl = document.getElementById('totalXiu');
+    const taiEl = document.getElementById('totalTai');
+
+    const targetXiu = Math.floor(serverLeft);
+    const targetTai = Math.floor(serverRight);
+
+    // Nếu giá trị lệch quá nhiều (do ván mới), cập nhật ngay lập tức
+    if (Math.abs(targetXiu - currentDisplayedXiu) > 50000000) {
+        currentDisplayedXiu = targetXiu;
+        currentDisplayedTai = targetTai;
+    } else {
+        // Nếu không thì dùng animation để đồng bộ mượt mà đến con số thật của server
+        animateNumber(xiuEl, currentDisplayedXiu, targetXiu, 800);
+        animateNumber(taiEl, currentDisplayedTai, targetTai, 800);
+        currentDisplayedXiu = targetXiu;
+        currentDisplayedTai = targetTai;
+    }
+}
+
+function runVirtualBetLoop() {
+    // Chỉ chạy ảo khi đang trong thời gian đặt cược
+    if (lastPhase === 'betting' && timeLeft > 2) {
+        const xiuEl = document.getElementById('totalXiu');
+        const taiEl = document.getElementById('totalTai');
+
+        // Khai báo biến jitter để tạo hiệu ứng số nhảy liên tục
+        const jitter = Math.floor(Math.random() * 800000) + 400000;
+
+        // Jitter có tỷ lệ để duy trì cảm giác lệch 30% giữa các lần sync
+        const xiuMult = (document.getElementById('btnLeft').classList.contains('text-yellow-400') || currentDisplayedXiu > currentDisplayedTai) ? 1.0 : 0.7;
+        const taiMult = xiuMult === 1.0 ? 0.7 : 1.0;
+
+        currentDisplayedXiu += Math.floor(jitter * xiuMult);
+        currentDisplayedTai += Math.floor(jitter * taiMult);
+
+        if (xiuEl) xiuEl.textContent = currentDisplayedXiu.toLocaleString();
+        if (taiEl) taiEl.textContent = currentDisplayedTai.toLocaleString();
+    }
 }
 
 function renderHistoryChart(history) {
@@ -303,7 +395,14 @@ function resetGameUI() {
     document.getElementById('btnRight').className = 'bet-button py-4 rounded-2xl font-black text-xl text-gray-400';
     document.getElementById('result').textContent = "";
     ['dice1', 'dice2', 'dice3'].forEach(id => document.getElementById(id).style.transform = `rotateX(0deg) rotateY(0deg)`);
+
     document.getElementById('bowl').classList.remove('open');
+    // Reset các biến theo dõi giá trị hiển thị khi UI reset
+    currentDisplayedXiu = 0;
+    currentDisplayedTai = 0;
+    // Đảm bảo hiển thị 0đ ngay lập tức khi reset
+    document.getElementById('totalXiu').textContent = "0";
+    document.getElementById('totalTai').textContent = "0";
     document.getElementById('placedBetXiu').classList.add('hidden');
     document.getElementById('placedBetTai').classList.add('hidden');
     document.getElementById('mainPlate').classList.remove('rolling');
@@ -322,6 +421,12 @@ function selectSide(side) {
     selectedSide = side;
     document.getElementById('btnLeft').className = side === 'left' ? 'bet-button active py-4 rounded-2xl font-black text-xl text-yellow-400' : 'bet-button py-4 rounded-2xl font-black text-xl text-gray-400';
     document.getElementById('btnRight').className = side === 'right' ? 'bet-button active py-4 rounded-2xl font-black text-xl text-yellow-400' : 'bet-button py-4 rounded-2xl font-black text-xl text-gray-400';
+}
+
+function addBetAmount(amount) {
+    const input = document.getElementById('betAmount');
+    const currentVal = parseInt(input.value) || 0;
+    input.value = currentVal + amount;
 }
 
 async function placeBet(e) {
@@ -418,8 +523,10 @@ async function sendResolveBetToServer(bid) {
                 const lastBet = newHist.find(b => b.id == bid);
                 if (lastBet && lastBet.result === 'Thắng') {
                     resultText += `<div class="text-green-400 font-bold mt-1">🎉 CHÚC MỪNG +${lastBet.winAmount.toLocaleString()}đ</div>`;
+                    showToast(`🎉 Bạn đã thắng +${lastBet.winAmount.toLocaleString()}đ!`, 'success');
                 } else {
                     resultText += `<div class="text-red-500 font-bold mt-1">HẸN BẠN PHIÊN SAU!</div>`;
+                    showToast(`💔 Bạn đã thua phiên này. Chúc may mắn lần sau!`, 'error');
                 }
             }
             resultEl.innerHTML = resultText;
@@ -436,6 +543,7 @@ function updateBalanceDisplay() {
 function openModal(id) {
     document.getElementById(id).classList.remove('hidden');
     if (id === 'profileModal') loadProfileData();
+    else if (id === 'leaderboardModal') renderLeaderboard();
     else if (id === 'historyModal') renderHistory();
     else if (id === 'adminModal') { renderAdminDepositList(); renderAdminUserList(); renderAdminWithdrawList(); }
 }
@@ -554,7 +662,7 @@ async function handleWithdraw(e) {
         updateBalanceDisplay();
         closeModal('withdrawModal');
         showToast("🚀 Đã gửi lệnh rút!");
-    }
+    } else { showToast(res.message, "error"); }
 }
 
 function switchHistoryTab(tab) {
@@ -597,12 +705,12 @@ async function renderAdminDepositList() {
     el.innerHTML = pending.length ? '' : '<p class="text-gray-500 text-xs italic">Không có yêu cầu mới</p>';
     pending.forEach(r => {
         const dv = document.createElement('div');
-        dv.className = 'bg-black p-3 rounded-xl flex justify-between border border-red-900/30 text-xs';
+        dv.className = 'bg-black/50 p-3 rounded-2xl flex justify-between items-center border border-white/5 text-[11px] mb-2';
         dv.innerHTML = `
-            <div>${r.user} - <span class="text-yellow-400">${r.amount.toLocaleString()}đ</span></div>
+            <div><span class="text-gray-400 uppercase font-black">${r.user}</span> <span class="text-emerald-400 font-bold ml-2">+${r.amount.toLocaleString()}đ</span></div>
             <div class="flex gap-2">
-                <button onclick="approveDeposit('${r.id}')" class="text-green-400 font-bold">Duyệt</button>
-                <button onclick="rejectDeposit('${r.id}')" class="text-red-500">Hủy</button>
+                <button onclick="approveDeposit('${r.id}')" class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-lg font-black hover:bg-emerald-500 transition">DUYỆT</button>
+                <button onclick="rejectDeposit('${r.id}')" class="bg-red-500/20 text-red-400 px-3 py-1 rounded-lg font-black hover:bg-red-500 transition">HỦY</button>
             </div>`;
         el.appendChild(dv);
     });
@@ -614,18 +722,32 @@ async function renderAdminDepositList() {
         hEl.innerHTML = history.length ? '' : '<p class="text-gray-600 text-[10px] italic text-center">Chưa có lịch sử</p>';
         history.slice(-10).reverse().forEach(r => {
             const dv = document.createElement('div');
-            dv.className = 'bg-zinc-900/50 p-2 rounded-lg flex justify-between text-[10px] border border-white/5 opacity-60';
+            dv.className = 'bg-zinc-900/30 p-2 rounded-lg flex justify-between items-center text-[9px] border border-white/5 opacity-60 mb-1';
             const statusColor = r.status === 'Success' ? 'text-green-500' : 'text-red-500';
-            dv.innerHTML = `<div>${r.user} - ${r.amount.toLocaleString()}đ</div><div class="${statusColor}">${r.status}</div>`;
+            dv.innerHTML = `
+                <div>${r.user} - ${r.amount.toLocaleString()}đ <span class="${statusColor}">${r.status}</span></div>
+                <button onclick="deleteDeposit('${r.id}')" class="text-gray-500 hover:text-red-500 ml-2">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>`;
             hEl.appendChild(dv);
         });
     }
 }
 
 async function approveDeposit(id) {
+    if (!confirm("Xác nhận DUYỆT yêu cầu nạp tiền này?")) return;
     const res = await fetchData('/api/admin/action', { method: 'POST', body: { type: 'approveDeposit', reqId: id } });
     if (res.success) {
         showToast("✅ Đã duyệt nạp!");
+        refreshAdminData(false);
+    }
+}
+
+async function deleteDeposit(id) {
+    if (!confirm("Xóa vĩnh viễn bản ghi lịch sử nạp này?")) return;
+    const res = await fetchData('/api/admin/action', { method: 'POST', body: { type: 'deleteDeposit', reqId: id } });
+    if (res.success) {
+        showToast("🗑️ Đã xóa lịch sử nạp");
         refreshAdminData(false);
     }
 }
@@ -653,9 +775,12 @@ function setAdminResult(mode) {
     fetchData('/api/admin/action', { method: 'POST', body: { type: 'setResult', mode } })
         .then(r => { if (r.success) showToast(`🎯 Admin: ${mode.toUpperCase()}`); });
 
-    document.getElementById('ctrlLeft').className = mode === 'left' ? 'bg-red-600 py-3 rounded-xl text-xs font-bold border border-red-400' : 'bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700';
-    document.getElementById('ctrlRandom').className = mode === 'random' ? 'bg-blue-600 py-3 rounded-xl text-xs font-bold border border-blue-400' : 'bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700';
-    document.getElementById('ctrlRight').className = mode === 'right' ? 'bg-red-600 py-3 rounded-xl text-xs font-bold border border-red-400' : 'bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700';
+    const activeCls = "bg-red-600 py-4 rounded-2xl text-[10px] font-black border border-red-400 transition shadow-[0_0_15px_rgba(239,68,68,0.3)]";
+    const inactiveCls = "bg-zinc-800 py-4 rounded-2xl text-[10px] font-black border border-white/5 transition active:scale-95";
+
+    document.getElementById('ctrlLeft').className = mode === 'left' ? activeCls : inactiveCls;
+    document.getElementById('ctrlRandom').className = mode === 'random' ? activeCls : inactiveCls;
+    document.getElementById('ctrlRight').className = mode === 'right' ? activeCls : inactiveCls;
 }
 
 
@@ -669,16 +794,16 @@ async function renderAdminWithdrawList() {
     el.innerHTML = pending.length ? '' : '<p class="text-gray-500 text-xs italic">Không có yêu cầu mới</p>';
     pending.forEach(r => {
         const dv = document.createElement('div');
-        dv.className = 'bg-black p-3 rounded-xl flex justify-between border border-blue-900/30 text-xs';
+        dv.className = 'bg-black/50 p-3 rounded-2xl flex justify-between items-center border border-white/5 text-[11px]';
         const btnLabel = r.status === 'Đang xử lý' ? 'XÁC NHẬN' : 'HOÀN THÀNH';
         dv.innerHTML = `
                         <div>
-                            <div class="font-bold text-blue-400">${r.user} - ${r.amount.toLocaleString()}đ</div>
+                            <div class="font-black text-blue-400 uppercase">${r.user} <span class="text-white ml-2">-${r.amount.toLocaleString()}đ</span></div>
                             <div class="text-[10px] text-gray-500">${r.bankName} | ${r.accountNumber}</div>
                         </div>
                         <div class="flex gap-2 items-center">
-                            <button onclick="approveWithdraw('${r.id}')" class="text-green-400 font-bold">${btnLabel}</button>
-                            <button onclick="rejectWithdraw('${r.id}')" class="text-red-500 text-[10px]">Hủy</button>
+                            <button onclick="approveWithdraw('${r.id}')" class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-lg font-black hover:bg-blue-500 hover:text-white transition uppercase">${btnLabel}</button>
+                            <button onclick="rejectWithdraw('${r.id}')" class="text-gray-500 text-[9px] font-bold hover:text-red-400">HỦY</button>
                         </div>`;
         el.appendChild(dv);
     });
@@ -690,7 +815,7 @@ async function renderAdminWithdrawList() {
         hEl.innerHTML = history.length ? '' : '<p class="text-gray-600 text-[10px] italic text-center">Chưa có lịch sử</p>';
         history.slice(-10).reverse().forEach(r => {
             const dv = document.createElement('div');
-            dv.className = 'bg-zinc-900/50 p-2 rounded-lg flex justify-between text-[10px] border border-white/5 opacity-60';
+            dv.className = 'bg-zinc-900/30 p-2 rounded-lg flex justify-between text-[9px] border border-white/5 opacity-60';
             const sColor = r.status === 'Hoàn thành' ? 'text-green-500' : 'text-red-500';
             dv.innerHTML = `<div>${r.user} - ${r.amount.toLocaleString()}đ</div><div class="${sColor}">${r.status}</div>`;
             hEl.appendChild(dv);
@@ -699,6 +824,7 @@ async function renderAdminWithdrawList() {
 }
 
 async function approveWithdraw(id) {
+    if (!confirm("Xác nhận hoàn thành lệnh RÚT TIỀN này?")) return;
     const res = await fetchData('/api/admin/action', { method: 'POST', body: { type: 'approveWithdraw', reqId: id } });
     if (res.success) { showToast("✅ Cập nhật trạng thái!"); refreshAdminData(false); }
 }
@@ -712,11 +838,13 @@ async function renderAdminUserList() {
         if (u === ADMIN_USERNAME) return;
         const usr = d.users[u];
         const dv = document.createElement('div');
-        dv.className = 'bg-black p-3 rounded-xl flex justify-between border border-zinc-800 text-xs';
+        dv.className = 'bg-black/50 p-4 rounded-2xl flex justify-between items-center border border-white/5 text-[11px]';
         dv.innerHTML = `
                         <div>
-                            <div class="font-bold ${usr.isLocked ? 'text-red-500' : 'text-white'} uppercase">${u}</div>
-                            <div class="text-gray-500">${usr.balance.toLocaleString()}đ</div>
+                            <div class="font-black ${usr.isLocked ? 'text-red-500' : 'text-white'} uppercase tracking-wider">${u}</div>
+                            <div class="text-gray-500 text-[9px] mt-0.5">SĐT: ${usr.phone || 'N/A'}</div>
+                            <div class="text-yellow-400 font-bold mt-1">${usr.balance.toLocaleString()}đ</div>
+                            <div class="text-gray-600 text-[8px] mt-1 opacity-50 uppercase">PASS: *** SECURED</div>
                         </div>
                         <button onclick="toggleLock('${u}', ${!usr.isLocked})" class="${usr.isLocked ? 'text-green-500' : 'text-red-500'}">
                             <i class="fa-solid ${usr.isLocked ? 'fa-unlock' : 'fa-lock'}"></i>
@@ -729,4 +857,35 @@ async function toggleLock(t, l) {
     await fetchData('/api/admin/action', { method: 'POST', body: { type: 'lock', target: t, value: l } });
     showToast(`Đã ${l ? 'khóa' : 'mở'} tài khoản ${t}`);
     renderAdminUserList();
+}
+
+async function renderLeaderboard() {
+    const el = document.getElementById('leaderboardList');
+    if (!el) return;
+    el.innerHTML = '<p class="text-center text-gray-500 py-4">Đang tải...</p>';
+
+    const res = await fetchData('/api/leaderboard');
+    if (res.success && res.leaderboard.length > 0) {
+        el.innerHTML = '';
+        res.leaderboard.forEach((player, index) => {
+            const rank = index + 1;
+            let rankIcon = '';
+            if (rank === 1) rankIcon = '<i class="fa-solid fa-crown text-yellow-400"></i>';
+            else if (rank === 2) rankIcon = '<i class="fa-solid fa-medal text-gray-400"></i>';
+            else if (rank === 3) rankIcon = '<i class="fa-solid fa-medal text-amber-700"></i>';
+
+            const dv = document.createElement('div');
+            dv.className = 'bg-black/40 p-3 rounded-xl border border-white/5 flex justify-between items-center text-sm';
+            dv.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-yellow-400 w-6 text-center">${rank}.</span>
+                    ${rankIcon}
+                    <span class="font-bold">${player.username}</span>
+                </div>
+                <div class="text-green-400 font-bold">${player.balance.toLocaleString()}đ</div>`;
+            el.appendChild(dv);
+        });
+    } else {
+        el.innerHTML = '<p class="text-center text-gray-500 py-4">Chưa có dữ liệu bảng xếp hạng.</p>';
+    }
 }

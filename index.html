@@ -11,6 +11,11 @@
 </head>
 
 <body class="min-h-screen text-white pb-24 bg-black">
+    <!-- Hiệu ứng ánh sáng casino mờ -->
+    <div class="fixed inset-0 pointer-events-none opacity-20 z-0">
+        <div class="absolute top-0 left-1/4 w-64 h-64 bg-yellow-500 blur-[120px]"></div>
+        <div class="absolute bottom-0 right-1/4 w-64 h-64 bg-blue-500 blur-[120px]"></div>
+    </div>
 
     <!-- Auth Container (Đăng ký/Đăng nhập) -->
     <div id="authContainer" class="fixed inset-0 z-[1000] bg-black/95 flex items-center justify-center p-4">
@@ -48,13 +53,14 @@
         </div>
     </div>
 
-    <div id="gameContainer" class="max-w-[430px] mx-auto hidden">
+    <div id="gameContainer" class="max-w-[768px] mx-auto hidden">
 
         <!-- Header -->
-        <div class="bg-black/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-yellow-400/20">
-            <div class="max-w-[430px] mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="bg-zinc-950/90 backdrop-blur-xl fixed top-0 left-0 right-0 z-50 border-b border-yellow-500/30">
+            <div class="max-w-[768px] mx-auto px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="text-3xl font-black sunwin-gold tracking-tighter inline-block">HIEUBET</span>
+                    <span
+                        class="text-4xl font-black sunwin-gold tracking-tighter inline-block transform -skew-x-12">HIEUBET</span>
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="flex items-center bg-zinc-900 px-4 py-1 rounded-full border border-yellow-400/20">
@@ -75,7 +81,7 @@
 
         <div class="pt-24 px-4 pb-12">
             <!-- Nạp/Rút Buttons -->
-            <div class="grid grid-cols-3 gap-2 mb-6 text-[10px]">
+            <div class="grid grid-cols-3 gap-3 mb-8 text-[11px]">
                 <button type="button" onclick="openModal('depositModal')"
                     class="bg-gradient-to-b from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white font-bold py-2 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all active:scale-95 border border-emerald-400/20">
                     <i class="fa-solid fa-plus-circle"></i> NẠP TIỀN
@@ -94,17 +100,22 @@
                 PREMIUM CASINO</h1>
 
             <!-- Countdown Timer -->
-            <div class="text-center mb-6 bg-zinc-900/80 py-3 rounded-3xl border-2 border-yellow-400/30 shadow-inner">
-                <div class="text-[10px] text-gray-400 uppercase tracking-widest">Thời gian đặt cược</div>
+            <div
+                class="text-center mb-8 bg-zinc-900/90 py-4 rounded-[40px] border-b-4 border-yellow-600 shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-yellow-500/20"></div>
+                <div class="text-[10px] text-yellow-500/70 uppercase tracking-[0.2em] font-bold">Thời gian đặt cược
+                </div>
                 <div id="countdown"
                     class="text-5xl font-black text-yellow-400 font-mono drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">40
                 </div>
             </div>
 
             <!-- Biểu đồ lịch sử cầu (Soi cầu) -->
-            <div class="mb-6 bg-zinc-900/50 p-3 rounded-2xl border border-white/5">
-                <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-2 flex justify-between px-1">
-                    <span>Lịch sử phiên</span>
+            <div class="mb-8 bg-black/40 p-4 rounded-3xl border border-white/10 backdrop-blur-sm">
+                <div
+                    class="text-[10px] text-gray-400 uppercase tracking-[0.1em] mb-3 flex justify-between px-1 font-bold">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-chart-line text-yellow-500"></i> Lịch sử
+                        phiên</span>
                     <span id="historyStats" class="text-yellow-500/50"></span>
                 </div>
                 <div id="gameHistoryChart" class="flex flex-wrap gap-2 justify-start items-center min-h-[32px]">
@@ -112,90 +123,115 @@
                 </div>
             </div>
 
-            <!-- Plate Battle Area -->
-            <div class="casino-surface p-4 mb-8">
-                <div class="plate-container flex flex-col items-center">
-                    <div id="mainPlate"
-                        class="flex items-center gap-2 bg-black/50 p-6 rounded-full border-2 border-yellow-500/20 shadow-inner transition-all duration-500 mx-auto">
-                        <!-- Cái Bát che xúc xắc -->
-                        <div id="bowl" class="bowl"></div>
-                        <!-- Dice containers -->
-                        <div class="dice-wrapper">
-                            <div id="dice1" class="cube">
-                                <div class="face-1"><span class="pip"></span></div>
-                                <div class="face-2"><span class="pip"></span><span class="pip"></span></div>
-                                <div class="face-3"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span></div>
-                                <div class="face-4"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span><span class="pip"></span></div>
-                                <div class="face-5"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span><span class="pip"></span><span class="pip"></span></div>
-                                <div class="face-6"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span></div>
+            <!-- Standard Sic Bo Betting Area -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
+                <!-- XỈU Side -->
+                <div class="flex-1 w-full text-center">
+                    <div class="relative inline-block w-full">
+                        <span id="placedBetXiu" class="bet-badge hidden">0đ</span>
+                        <button type="button" onclick="selectSide('left')" id="btnLeft"
+                            class="bet-button w-full rounded-3xl">
+                            <span class="text-4xl font-black mb-1">XỈU</span>
+                            <span class="text-gray-400 text-xs uppercase font-bold tracking-widest">4 - 10</span>
+                        </button>
+                    </div>
+                    <div class="mt-2 text-gray-500 text-[11px] font-bold">TỔNG CƯỢC: <span id="totalXiu"
+                            class="text-yellow-400 font-bold">0</span>đ</div>
+                </div>
+
+                <!-- Central Table & Dice -->
+                <div class="casino-surface shadow-2xl">
+                    <div class="plate-container">
+                        <div id="mainPlate"
+                            class="flex items-center justify-center gap-2 w-48 h-48 bg-zinc-900 rounded-full shadow-inner transition-all duration-500 relative">
+                            <div id="bowl" class="bowl"></div>
+                            <div class="dice-wrapper">
+                                <div id="dice1" class="cube">
+                                    <div class="face-1"><span class="pip"></span></div>
+                                    <div class="face-2"><span class="pip"></span><span class="pip"></span></div>
+                                    <div class="face-3"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span></div>
+                                    <div class="face-4"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span><span class="pip"></span></div>
+                                    <div class="face-5"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+                                    <div class="face-6"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="dice-wrapper">
-                            <div id="dice2" class="cube">
-                                <div class="face-1"><span class="pip"></span></div>
-                                <div class="face-2"><span class="pip"></span><span class="pip"></span></div>
-                                <div class="face-3"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span></div>
-                                <div class="face-4"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span><span class="pip"></span></div>
-                                <div class="face-5"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span><span class="pip"></span><span class="pip"></span></div>
-                                <div class="face-6"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span></div>
+                            <div class="dice-wrapper">
+                                <div id="dice2" class="cube">
+                                    <div class="face-1"><span class="pip"></span></div>
+                                    <div class="face-2"><span class="pip"></span><span class="pip"></span></div>
+                                    <div class="face-3"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span></div>
+                                    <div class="face-4"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span><span class="pip"></span></div>
+                                    <div class="face-5"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+                                    <div class="face-6"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="dice-wrapper">
-                            <div id="dice3" class="cube">
-                                <div class="face-1"><span class="pip"></span></div>
-                                <div class="face-2"><span class="pip"></span><span class="pip"></span></div>
-                                <div class="face-3"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span></div>
-                                <div class="face-4"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span><span class="pip"></span></div>
-                                <div class="face-5"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span><span class="pip"></span><span class="pip"></span></div>
-                                <div class="face-6"><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span><span class="pip"></span><span class="pip"></span><span
-                                        class="pip"></span></div>
+                            <div class="dice-wrapper">
+                                <div id="dice3" class="cube">
+                                    <div class="face-1"><span class="pip"></span></div>
+                                    <div class="face-2"><span class="pip"></span><span class="pip"></span></div>
+                                    <div class="face-3"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span></div>
+                                    <div class="face-4"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span><span class="pip"></span></div>
+                                    <div class="face-5"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+                                    <div class="face-6"><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span><span class="pip"></span><span class="pip"></span><span
+                                            class="pip"></span></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Side Selection & Bet Input -->
-                <div class="mt-8 space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex flex-col items-center gap-2">
-                            <button type="button" onclick="selectSide('left')" id="btnLeft"
-                                class="bet-button w-full py-4 rounded-2xl font-black text-xl transition active:scale-95 text-gray-400">ĐẶT
-                                XỈU</button>
-                            <span id="placedBetXiu"
-                                class="text-green-400 font-bold text-xl hidden drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]"></span>
-                        </div>
-                        <div class="flex flex-col items-center gap-2">
-                            <button type="button" onclick="selectSide('right')" id="btnRight"
-                                class="bet-button w-full py-4 rounded-2xl font-black text-xl transition active:scale-95 text-gray-400">ĐẶT
-                                TÀI</button>
-                            <span id="placedBetTai"
-                                class="text-green-400 font-bold text-xl hidden drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]"></span>
-                        </div>
+                <!-- TÀI Side -->
+                <div class="flex-1 w-full text-center">
+                    <div class="relative inline-block w-full">
+                        <span id="placedBetTai" class="bet-badge hidden">0đ</span>
+                        <button type="button" onclick="selectSide('right')" id="btnRight"
+                            class="bet-button w-full rounded-3xl">
+                            <span class="text-4xl font-black mb-1">TÀI</span>
+                            <span class="text-gray-400 text-xs uppercase font-bold tracking-widest">11 - 17</span>
+                        </button>
                     </div>
-                    <input type="number" id="betAmount" value="10000" step="1000"
-                        class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center text-xl font-bold text-yellow-400 outline-none focus:border-yellow-400/50"
-                        placeholder="Số tiền cược...">
-                    <button id="playBtn" type="button"
-                        class="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl text-xl shadow-lg shadow-yellow-400/30 transition active:scale-95">
-                        ĐẶT CƯỢC
-                    </button>
+                    <div class="mt-2 text-gray-500 text-[11px] font-bold">TỔNG CƯỢC: <span id="totalTai"
+                            class="text-yellow-400 font-bold">0</span>đ</div>
+                </div>
+            </div>
+
+            <!-- Betting Controls -->
+            <div class="max-w-md mx-auto bg-zinc-950/80 p-6 rounded-[40px] border border-white/5 shadow-2xl">
+                <div id="result" class="text-center mb-4 font-black text-2xl min-h-[40px]"></div>
+
+                <div class="grid grid-cols-4 gap-2 mb-4">
+                    <button type="button" onclick="addBetAmount(10000)"
+                        class="bg-zinc-900 hover:bg-zinc-800 py-2 rounded-xl text-[11px] font-bold border border-white/5 text-gray-300">10K</button>
+                    <button type="button" onclick="addBetAmount(50000)"
+                        class="bg-zinc-900 hover:bg-zinc-800 py-2 rounded-xl text-[11px] font-bold border border-white/5 text-gray-300">50K</button>
+                    <button type="button" onclick="addBetAmount(100000)"
+                        class="bg-zinc-900 hover:bg-zinc-800 py-2 rounded-xl text-[11px] font-bold border border-white/5 text-gray-300">100K</button>
+                    <button type="button" onclick="addBetAmount(500000)"
+                        class="bg-zinc-900 hover:bg-zinc-800 py-2 rounded-xl text-[11px] font-bold border border-white/5 text-gray-300">500K</button>
                 </div>
 
-                <div id="result" class="text-center mt-4 font-bold text-lg min-h-[60px]"></div>
+                <input type="number" id="betAmount" value="10000" step="1000"
+                    class="w-full bg-black border-2 border-zinc-800 rounded-2xl p-4 text-center text-2xl font-black text-yellow-400 outline-none mb-4 shadow-inner"
+                    placeholder="SỐ TIỀN CƯỢC">
+
+                <button id="playBtn" type="button"
+                    class="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-black py-4 rounded-3xl text-xl shadow-lg transition active:scale-95 border-b-4 border-yellow-800">
+                    XÁC NHẬN CƯỢC
+                </button>
             </div>
 
             <div class="text-center mt-8 text-sm text-gray-400">
@@ -344,47 +380,67 @@
                 </div>
                 <button onclick="closeModal('adminModal')" class="text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto space-y-6">
-                <!-- Điều khiển kết quả -->
-                <div>
-                    <p class="text-gray-400 text-xs mb-3 uppercase font-bold text-red-400">Duyệt nạp tiền (Chờ xử lý)
-                    </p>
-                    <div id="adminDepositList" class="space-y-2 mb-6">
-                        <!-- Deposit requests injected here -->
-                    </div>
-                    <p class="text-gray-500 text-[10px] mb-2 uppercase opacity-50">Lịch sử nạp (10 phiên gần nhất)</p>
-                    <div id="adminDepositHistory" class="space-y-1 mb-6 max-h-32 overflow-y-auto"></div>
 
-                    <p class="text-gray-400 text-xs mb-3 uppercase font-bold text-blue-400">Duyệt rút tiền (Chờ xử lý)
-                    </p>
-                    <div id="adminWithdrawList" class="space-y-2 mb-6">
-                        <!-- Withdraw requests injected here -->
+            <!-- Admin Tab Navigation -->
+            <div class="flex bg-zinc-800 border-b border-white/5">
+                <button onclick="switchAdminTab('transactions')" id="tabAdminTransactions"
+                    class="flex-1 py-3 text-[10px] font-black border-b-2 border-red-500 text-white">GIAO DỊCH</button>
+                <button onclick="switchAdminTab('control')" id="tabAdminControl"
+                    class="flex-1 py-3 text-[10px] font-black border-b-2 border-transparent text-gray-500">KÈO
+                    CƯỢC</button>
+                <button onclick="switchAdminTab('users')" id="tabAdminUsers"
+                    class="flex-1 py-3 text-[10px] font-black border-b-2 border-transparent text-gray-500">THÀNH
+                    VIÊN</button>
+            </div>
+
+            <div class="p-4 overflow-y-auto flex-1">
+                <!-- Tab Giao dịch -->
+                <div id="adminContentTransactions" class="space-y-6">
+                    <div class="space-y-4">
+                        <p
+                            class="text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                            <i class="fa-solid fa-circle-arrow-down"></i> Yêu cầu nạp tiền
+                        </p>
+                        <div id="adminDepositList" class="space-y-2"></div>
+                        <p class="text-gray-500 text-[9px] uppercase font-bold opacity-50">Lịch sử nạp gần đây</p>
+                        <div id="adminDepositHistory" class="space-y-1 max-h-24 overflow-y-auto"></div>
                     </div>
-                    <p class="text-gray-500 text-[10px] mb-2 uppercase opacity-50">Lịch sử rút (10 phiên gần nhất)</p>
-                    <div id="adminWithdrawHistory" class="space-y-1 mb-6 max-h-32 overflow-y-auto"></div>
+                    <div class="h-px bg-white/5"></div>
+                    <div class="space-y-4">
+                        <p
+                            class="text-blue-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                            <i class="fa-solid fa-circle-arrow-up"></i> Yêu cầu rút tiền
+                        </p>
+                        <div id="adminWithdrawList" class="space-y-2"></div>
+                        <p class="text-gray-500 text-[9px] uppercase font-bold opacity-50">Lịch sử rút gần đây</p>
+                        <div id="adminWithdrawHistory" class="space-y-1 max-h-24 overflow-y-auto"></div>
+                    </div>
                 </div>
 
-                <div>
-                    <p class="text-gray-400 text-xs mb-3 uppercase font-bold">Điều khiển kết quả phiên tới</p>
+                <!-- Tab Điều khiển -->
+                <div id="adminContentControl" class="hidden space-y-6 py-4">
+                    <p class="text-white text-[10px] font-black uppercase tracking-widest text-center">Tỉ lệ thắng phiên
+                        tới</p>
                     <div class="grid grid-cols-3 gap-2">
                         <button onclick="setAdminResult('left')" id="ctrlLeft"
-                            class="bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700">XỈU
+                            class="bg-zinc-800 py-4 rounded-2xl text-[10px] font-black border border-white/5 transition active:scale-95">XỈU
                             THẮNG</button>
                         <button onclick="setAdminResult('random')" id="ctrlRandom"
-                            class="bg-blue-600 py-3 rounded-xl text-xs font-bold border border-blue-400">NGẪU
-                            NHIÊN</button>
+                            class="bg-red-600 py-4 rounded-2xl text-[10px] font-black border border-red-400 transition shadow-[0_0_15px_rgba(239,68,68,0.3)]">RANDOM</button>
                         <button onclick="setAdminResult('right')" id="ctrlRight"
-                            class="bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700">TÀI
+                            class="bg-zinc-800 py-4 rounded-2xl text-[10px] font-black border border-white/5 transition active:scale-95">TÀI
                             THẮNG</button>
+                    </div>
+                    <div class="bg-black/50 p-4 rounded-2xl border border-white/5 text-[10px] text-gray-400 italic">
+                        <i class="fa-solid fa-circle-info mr-1 text-red-500"></i> Lưu ý: Khi chọn "Xỉu" hoặc "Tài", hệ
+                        thống sẽ tự động can thiệp kết quả phiên tiếp theo.
                     </div>
                 </div>
 
-                <!-- Quản lý người dùng -->
-                <div>
-                    <p class="text-gray-400 text-xs mb-3 uppercase font-bold">Danh sách người dùng</p>
-                    <div id="adminUserList" class="space-y-2">
-                        <!-- User items injected here -->
-                    </div>
+                <!-- Tab Thành viên -->
+                <div id="adminContentUsers" class="hidden space-y-4">
+                    <p class="text-white text-[10px] font-black uppercase tracking-widest">Danh sách thành viên</p>
+                    <div id="adminUserList" class="space-y-2"></div>
                 </div>
             </div>
         </div>
@@ -472,6 +528,26 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Bảng Xếp Hạng -->
+    <div id="leaderboardModal" class="fixed inset-0 bg-black/90 z-[150] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-zinc-900 w-full max-w-md rounded-3xl border border-yellow-400/30 overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="bg-zinc-800 p-4 flex justify-between items-center border-b border-white/10">
+                <h3 class="font-bold text-yellow-400 uppercase"><i class="fa-solid fa-trophy mr-2"></i> BẢNG XẾP HẠNG
+                    TOP 3</h3>
+                <button onclick="closeModal('leaderboardModal')" class="text-white"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1">
+                <div id="leaderboardList" class="space-y-2">
+                    <!-- Leaderboard items will be rendered here -->
+                    <p class="text-center text-gray-500 py-4">Đang tải...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Hệ thống Thông báo Toast -->
     <div id="toast"

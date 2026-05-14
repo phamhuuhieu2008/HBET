@@ -80,7 +80,7 @@ function saveData(file, data) {
 const ADMIN_USERNAME = process.env.ADMIN_ID || "0708069602";
 
 const DEFAULT_ADMIN = {
-    [ADMIN_USERNAME]: { password: ADMIN_USERNAME, balance: 99999999, isLocked: false, betHistory: [], withdrawHistory: [] }
+    [ADMIN_USERNAME]: { password: ADMIN_USERNAME, balance: 99999999, isLocked: false, betHistory: [], withdrawHistory: [], hasDeposited: true }
 };
 let users = loadData(USERS_FILE, DEFAULT_ADMIN);
 let deposits = loadData(DEPOSITS_FILE, []);
@@ -89,16 +89,36 @@ let withdraws = loadData(WITHDRAWS_FILE, []);
 let nextResultOverride = 'random';
 let currentResult = { dice: [1, 2, 3], total: 6 };
 let gameHistory = []; // Lưu trữ 24 phiên gần nhất
+let currentSessionBets = { left: 0, right: 0 }; // Tổng tiền cược Tài/Xỉu toàn hệ thống
 
 // --- HỆ THỐNG THỜI GIAN TOÀN CỤC VÀ TRẠNG THÁI GAME ---
 let gameState = {
     timeLeft: 40,
-    phase: 'betting' // 'betting' hoặc 'rolling'
+    phase: 'betting', // 'betting' hoặc 'rolling'
+    heavySide: 'left' // Dùng để xác định bên nào sẽ nhảy tiền nhiều hơn trong phiên này
 };
 
 setInterval(() => {
     if (gameState.timeLeft > 0) {
         gameState.timeLeft--;
+
+        // Tự động tạo tiền cược ảo cho mỗi giây để tạo cảm giác đông người chơi
+        if (gameState.phase === 'betting' && gameState.timeLeft > 0) {
+            const MAX_TOTAL = 2000000000; // Giới hạn 2 tỷ đồng
+            const ratio = 0.68 + (Math.random() * 0.04); // Tạo tỷ lệ lệch ~30% (cửa nhẹ ~ 70% cửa nặng)
+
+            // Tăng tiền theo bước nhảy (additive) để bảo toàn tiền cược thật
+            let heavyInc = Math.floor(Math.random() * 30000000) + 15000000;
+            let lightInc = Math.floor(heavyInc * ratio);
+
+            if (gameState.heavySide === 'left') {
+                if (currentSessionBets.left < MAX_TOTAL) currentSessionBets.left += heavyInc;
+                currentSessionBets.right += lightInc;
+            } else {
+                if (currentSessionBets.right < MAX_TOTAL) currentSessionBets.right += heavyInc;
+                currentSessionBets.left += lightInc;
+            }
+        }
     } else {
         if (gameState.phase === 'betting') {
             gameState.phase = 'rolling';
@@ -126,6 +146,16 @@ setInterval(() => {
         } else {
             gameState.phase = 'betting';
             gameState.timeLeft = 40;
+            gameState.heavySide = Math.random() > 0.5 ? 'left' : 'right'; // Chọn ngẫu nhiên bên nặng cho phiên mới
+
+            // Reset và khởi tạo số tiền ban đầu tuân thủ tỷ lệ lệch 30%
+            let startAmt = Math.floor(Math.random() * 10000000) + 5000000;
+            let initRatio = 0.68 + (Math.random() * 0.04);
+            if (gameState.heavySide === 'left') {
+                currentSessionBets = { left: startAmt, right: Math.floor(startAmt * initRatio) };
+            } else {
+                currentSessionBets = { right: startAmt, left: Math.floor(startAmt * initRatio) };
+            }
         }
     }
 }, 1000);
@@ -152,8 +182,10 @@ app.get('/api/game-state', (req, res) => {
         isLocked: isLocked,
         betHistory,
         withdrawHistory,
-        gameHistory // Gửi lịch sử cầu về cho client
+        gameHistory, // Gửi lịch sử cầu về cho client
+        totalBets: currentSessionBets // Gửi tổng tiền cược toàn hệ thống
     });
+    console.log(`[SERVER] Sending game state to ${username || 'anonymous'}. TotalBets: ${JSON.stringify(currentSessionBets)}`);
 });
 
 /**
@@ -183,7 +215,10 @@ app.post('/api/withdraw', async (req, res) => {
         users = loadData(USERS_FILE, DEFAULT_ADMIN); // Đồng bộ lại từ JSON
         const user = users[username];
 
-        if (user && user.balance >= amount) {
+        if (!user) return res.json({ success: false, message: "Người dùng không tồn tại" });
+        if (!user.hasDeposited) return res.json({ success: false, message: "Bạn phải nạp tiền lần đầu và được Admin duyệt mới có thể rút tiền!" });
+
+        if (user.balance >= amount) {
             user.balance -= parseInt(amount);
             const reqWithdraw = { id: Date.now(), user: username, amount: parseInt(amount), bankName, accountNumber, accountHolder, status: 'Đang xử lý', time: new Date() };
             user.withdrawHistory.unshift(reqWithdraw);
@@ -215,7 +250,7 @@ app.post('/api/register', async (req, res) => {
         const currentUsers = loadData(USERS_FILE, DEFAULT_ADMIN);
         if (currentUsers[username]) return res.json({ success: false, message: "Tài khoản đã tồn tại!" });
 
-        currentUsers[username] = { password, balance: 10000, isLocked: false, betHistory: [], withdrawHistory: [] };
+        currentUsers[username] = { password, balance: 10000, isLocked: false, betHistory: [], withdrawHistory: [], hasDeposited: false };
         saveData(USERS_FILE, currentUsers);
         users = currentUsers; // Cập nhật bộ nhớ tạm
         res.json({ success: true, message: "Đăng ký thành công!" });
@@ -278,6 +313,7 @@ app.post('/api/place-bet', async (req, res) => {
 
     const betId = Date.now();
     user.balance -= amount;
+    currentSessionBets[side] += amount; // Cộng vào tổng cược hệ thống
     user.betHistory.unshift({ id: betId, side, amount, result: 'Đang chờ', time: new Date() });
     saveData(USERS_FILE, users);
     res.json({ success: true, balance: user.balance, betHistory: user.betHistory, betId });
@@ -333,6 +369,7 @@ app.post('/api/admin/action', async (req, res) => {
         const idx = currentDeposits.findIndex(r => r.id == reqId);
         if (idx !== -1 && users[currentDeposits[idx].user]) {
             users[currentDeposits[idx].user].balance += currentDeposits[idx].amount;
+            users[currentDeposits[idx].user].hasDeposited = true; // Kích hoạt quyền rút tiền sau nạp đầu
             currentDeposits[idx].status = 'Success';
             deposits = currentDeposits; // Cập nhật lại biến toàn cục
             saveData(USERS_FILE, users); saveData(DEPOSITS_FILE, deposits);
@@ -393,6 +430,17 @@ app.post('/api/admin/action', async (req, res) => {
     }
 
     res.json({ success: false });
+});
+
+app.get('/api/leaderboard', (req, res) => {
+    const currentUsers = loadData(USERS_FILE, DEFAULT_ADMIN);
+    const leaderboard = Object.keys(currentUsers)
+        .filter(username => username !== ADMIN_USERNAME && !currentUsers[username].isLocked)
+        .map(username => ({ username, balance: currentUsers[username].balance }))
+        .sort((a, b) => b.balance - a.balance)
+        .slice(0, 3); // Lấy top 3
+
+    res.json({ success: true, leaderboard });
 });
 
 const PORT = process.env.PORT || 3000;
