@@ -348,7 +348,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`-----------------------------------------`);
     console.log(`🚀 HIEUBET SERVER ĐANG CHẠY THÀNH CÔNG!`);
-    console.log(`🔗 Truy cập ngay tại: http://127.0.0.1:${PORT}`);
-    console.log(`💡 Lưu ý: Đừng đóng cửa sổ Terminal này khi chơi.`);
-    console.log(`-----------------------------------------`);
+    console.log(`🔗 Lưu ý: Đừng đóng cửa sổ Terminal này khi chơi.`);
+    console.log(`----------------------------------------`);
 });
