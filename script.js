@@ -8,8 +8,10 @@ let timeLeft = 40, timerInterval = null, hasBet = false, sideBet = null, amountB
 let currentBetId = null, isOpening = false, lastPhase = 'betting', resultFetched = false;
 let autoOpenTimeout = null;
 
-// Tự động nhận diện API: Nếu không chạy ở cổng 3000, nó sẽ trỏ về localhost:3000
-const API_URL = window.location.port === "3000" ? "" : "http://localhost:3000";
+// Tự động nhận diện API: 
+// Nếu chạy ở localhost nhưng sai cổng (ví dụ Live Server 5500) thì trỏ về 3000.
+// Nếu chạy trên Web (Render) thì dùng đường dẫn tương đối "".
+const API_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && window.location.port !== "3000" ? "http://localhost:3000" : "";
 
 async function fetchData(endpoint, options = {}) {
     const url = `${API_URL}${endpoint}`;
