@@ -201,6 +201,10 @@ function startTimer() {
             if (diff > 0) showToast(`💰 Tài khoản được cộng +${diff.toLocaleString()}đ`);
         }
 
+        // Tự động cập nhật lịch sử để người dùng thấy trạng thái "Thắng/Thua" hoặc "Hoàn thành" nạp rút ngay lập tức
+        if (res.betHistory) betHistory = res.betHistory;
+        if (res.withdrawHistory) withdrawHistory = res.withdrawHistory;
+
         timeLeft = res.timeLeft;
         const currentPhase = res.phase;
         updateTimerDisplay();
@@ -368,7 +372,9 @@ function openModal(id) {
     else if (id === 'adminModal') { renderAdminDepositList(); renderAdminUserList(); renderAdminWithdrawList(); }
 }
 
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
 
 function loadProfileData() {
     document.getElementById('profileUsername').textContent = currentUser;
@@ -384,46 +390,36 @@ function loadProfileData() {
     });
 }
 
-async function refreshAdminData() {
+async function refreshAdminData(showMsg = true) {
     const btn = document.querySelector('#adminModal .fa-rotate');
     if (btn) btn.classList.add('fa-spin');
-    await Promise.all([renderAdminDepositList(), renderAdminUserList(), renderAdminWithdrawList()]);
+    // Cập nhật tất cả các danh sách cùng lúc
+    await Promise.all([
+        renderAdminDepositList(),
+        renderAdminWithdrawList(),
+        renderAdminUserList()
+    ]);
     if (btn) btn.classList.remove('fa-spin');
-    showToast("🔄 Đã cập nhật dữ liệu mới nhất");
+    if (showMsg) showToast("🔄 Đã cập nhật dữ liệu mới nhất");
 }
 
 function showTransferInfo() {
     const amount = document.getElementById('depositAmount').value;
     if (!amount || amount < 10000) return showToast("Số tiền tối thiểu 10,000đ", "error");
 
-    // Cập nhật số tiền hiển thị trên giao diện
     document.getElementById('displayDepositAmount').textContent = parseInt(amount).toLocaleString() + "đ";
 
-    // Cấu hình mã QR động VietQR (Ngân hàng Bản Việt - VCCB)
     const bankID = "VCCB";
     const accountNo = "99ZP24249M42049701";
-    const template = "compact2"; // Mẫu QR gọn đẹp
-    const description = "99ZP24249M42049701"; // Nội dung chuyển khoản
+    const template = "compact2";
+    const description = "99ZP24249M42049701";
     const accountName = "PHAM HUU HIEU";
 
-    // Tạo link QR động chứa đầy đủ thông tin số tiền và nội dung
     const qrUrl = `https://img.vietqr.io/image/${bankID}-${accountNo}-${template}.png?amount=${amount}&addInfo=${description}&accountName=${encodeURIComponent(accountName)}`;
-
-    // Thay thế ảnh tĩnh bằng QR động
     document.getElementById('qrCodeImg').src = qrUrl;
 
     document.getElementById('depositStep1').classList.add('hidden');
     document.getElementById('depositStep2').classList.remove('hidden');
-}
-
-async function confirmDeposit(btn) {
-    const amount = document.getElementById('depositAmount').value;
-    const code = document.getElementById('transferCode').textContent;
-    const res = await fetchData('/api/deposit', { method: 'POST', body: { username: currentUser, amount, code } });
-    if (res.success) {
-        showToast(res.message);
-        closeModal('depositModal');
-    } else { showToast(res.message, "error"); }
 }
 
 function showToast(msg, type = 'success') {
@@ -450,6 +446,16 @@ function previewAvatar(input) {
     }
 }
 
+async function confirmDeposit(btn) {
+    const amount = document.getElementById('depositAmount').value;
+    const code = document.getElementById('transferCode').textContent;
+    const res = await fetchData('/api/deposit', { method: 'POST', body: { username: currentUser, amount, code } });
+    if (res.success) {
+        showToast(res.message);
+        closeModal('depositModal');
+    } else { showToast(res.message, "error"); }
+}
+
 async function saveProfile(btn) {
     const fullName = document.getElementById('profileFullName').value.trim();
     const phone = document.getElementById('profilePhone').value.trim();
@@ -457,19 +463,6 @@ async function saveProfile(btn) {
     if (!/^\d{10,11}$/.test(phone)) return showToast("SĐT không hợp lệ!", "error");
     const res = await fetchData('/api/update-profile', { method: 'POST', body: { username: currentUser, fullName, phone, avatar: tempAvatarBase64 } });
     if (res.success) { showToast("✅ Thành công!"); closeModal('profileModal'); }
-}
-
-async function handleDeposit() {
-    const amt = parseInt(document.getElementById('depositAmount').value);
-    const code = document.getElementById('depositCode').value.trim();
-    if (!amt || amt < 10000) return showToast("Tối thiểu 10.000đ", "error");
-    if (!code) return showToast("Vui lòng nhập mã giao dịch", "error");
-
-    const res = await fetchData('/api/deposit', { method: 'POST', body: { username: currentUser, amount: amt, code: code } });
-    if (res.success) {
-        showToast(res.message);
-        closeModal('depositModal');
-    } else { showToast(res.message, "error"); }
 }
 
 async function handleWithdraw() {
@@ -535,7 +528,7 @@ async function approveDeposit(id) {
     const res = await fetchData('/api/admin/action', { method: 'POST', body: { type: 'approveDeposit', reqId: id } });
     if (res.success) {
         showToast("✅ Đã duyệt nạp!");
-        renderAdminDepositList();
+        refreshAdminData(false); // Làm mới toàn bộ (cả số dư user) mà không hiện toast lặp lại
     }
 }
 
@@ -544,9 +537,10 @@ function setAdminResult(mode) {
         .then(r => { if (r.success) showToast(`🎯 Admin: ${mode.toUpperCase()}`); });
 
     document.getElementById('ctrlLeft').className = mode === 'left' ? 'bg-red-600 py-3 rounded-xl text-xs font-bold border border-red-400' : 'bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700';
-    document.getElementById('ctrlRight').className = mode === 'right' ? 'bg-red-600 py-3 rounded-xl text-xs font-bold border border-red-400' : 'bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700';
     document.getElementById('ctrlRandom').className = mode === 'random' ? 'bg-blue-600 py-3 rounded-xl text-xs font-bold border border-blue-400' : 'bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700';
+    document.getElementById('ctrlRight').className = mode === 'right' ? 'bg-red-600 py-3 rounded-xl text-xs font-bold border border-red-400' : 'bg-zinc-800 py-3 rounded-xl text-xs font-bold border border-zinc-700';
 }
+
 
 async function renderAdminWithdrawList() {
     const d = await fetchData('/api/admin/data');
@@ -571,7 +565,7 @@ async function renderAdminWithdrawList() {
 
 async function approveWithdraw(id) {
     const res = await fetchData('/api/admin/action', { method: 'POST', body: { type: 'approveWithdraw', reqId: id } });
-    if (res.success) { showToast("✅ Cập nhật trạng thái!"); renderAdminWithdrawList(); }
+    if (res.success) { showToast("✅ Cập nhật trạng thái!"); refreshAdminData(false); }
 }
 
 async function renderAdminUserList() {
@@ -586,7 +580,7 @@ async function renderAdminUserList() {
         dv.className = 'bg-black p-3 rounded-xl flex justify-between border border-zinc-800 text-xs';
         dv.innerHTML = `
                         <div>
-                            <div class="font-bold ${usr.isLocked ? 'text-red-500' : 'text-white'}">${u}</div>
+                            <div class="font-bold ${usr.isLocked ? 'text-red-500' : 'text-white'} uppercase">${u}</div>
                             <div class="text-gray-500">${usr.balance.toLocaleString()}đ</div>
                         </div>
                         <button onclick="toggleLock('${u}', ${!usr.isLocked})" class="${usr.isLocked ? 'text-green-500' : 'text-red-500'}">

@@ -128,17 +128,24 @@ app.get('/api/game-state', (req, res) => {
     const { username } = req.query;
     let userBalance = null;
     let isLocked = false;
+    let betHistory = null;
+    let withdrawHistory = null;
+
     if (username && users[username]) {
         // Lấy số dư trực tiếp từ bộ nhớ (đã được admin cập nhật khi duyệt)
         userBalance = users[username].balance;
         isLocked = users[username].isLocked || false;
+        betHistory = users[username].betHistory || [];
+        withdrawHistory = users[username].withdrawHistory || [];
     }
     res.json({
         success: true, // Thêm thuộc tính success: true
         timeLeft: gameState.timeLeft,
         phase: gameState.phase,
         balance: userBalance,
-        isLocked: isLocked
+        isLocked: isLocked,
+        betHistory,
+        withdrawHistory
     });
 });
 
