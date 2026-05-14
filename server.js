@@ -75,8 +75,12 @@ function saveData(file, data) {
     }
 }
 
+// --- CONFIGURATION ---
+// Có thể thay đổi Admin ID và Password tại đây hoặc qua biến môi trường .env
+const ADMIN_USERNAME = process.env.ADMIN_ID || "0708069602";
+
 const DEFAULT_ADMIN = {
-    "0708069602": { password: "0708069602", balance: 99999999, isLocked: false, betHistory: [], withdrawHistory: [] }
+    [ADMIN_USERNAME]: { password: ADMIN_USERNAME, balance: 99999999, isLocked: false, betHistory: [], withdrawHistory: [] }
 };
 let users = loadData(USERS_FILE, DEFAULT_ADMIN);
 let deposits = loadData(DEPOSITS_FILE, []);

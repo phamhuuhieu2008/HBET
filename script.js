@@ -1,3 +1,6 @@
+// Cấu hình ID Admin đồng bộ với server.js
+const ADMIN_USERNAME = "0708069602";
+
 let currentUser = null;
 let balance = 0;
 let betHistory = [];
@@ -90,7 +93,7 @@ async function handleLogin() {
         localStorage.setItem('sunwin_session', currentUser);
         initGame();
 
-        if (currentUser === '0708069602') {
+        if (currentUser === ADMIN_USERNAME) {
             showToast("👑 Chào mừng Admin quay trở lại!");
         }
     } else { showToast(res.message, "error"); }
@@ -100,7 +103,7 @@ function initGame() {
     document.getElementById('authContainer').classList.add('hidden');
     document.getElementById('gameContainer').classList.remove('hidden');
     updateBalanceDisplay();
-    if (currentUser === '0708069602') {
+    if (currentUser === ADMIN_USERNAME) {
         document.getElementById('adminBtn').classList.remove('hidden');
         renderAdminUserList(); renderAdminDepositList(); renderAdminWithdrawList();
     } else {
@@ -541,7 +544,7 @@ async function renderAdminUserList() {
     const el = document.getElementById('adminUserList');
     el.innerHTML = '';
     if (d.users) Object.keys(d.users).forEach(u => {
-        if (u === '0708069602') return;
+        if (u === ADMIN_USERNAME) return;
         const usr = d.users[u];
         const dv = document.createElement('div');
         dv.className = 'bg-black p-3 rounded-xl flex justify-between border border-zinc-800 text-xs';
