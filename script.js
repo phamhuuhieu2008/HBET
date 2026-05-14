@@ -188,6 +188,12 @@ function startTimer() {
         const res = await fetchData(`/api/game-state?username=${currentUser}`);
         if (!res || !res.success) return;
 
+        if (res.isLocked) {
+            showToast("⚠️ Tài khoản của bạn đã bị khóa bởi Admin!", "error");
+            setTimeout(() => handleLogout(), 2000);
+            return;
+        }
+
         if (res.balance !== null && res.balance !== balance) {
             const diff = res.balance - balance;
             balance = res.balance;

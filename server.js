@@ -127,15 +127,18 @@ setInterval(() => {
 app.get('/api/game-state', (req, res) => {
     const { username } = req.query;
     let userBalance = null;
+    let isLocked = false;
     if (username && users[username]) {
         // Lấy số dư trực tiếp từ bộ nhớ (đã được admin cập nhật khi duyệt)
         userBalance = users[username].balance;
+        isLocked = users[username].isLocked || false;
     }
     res.json({
         success: true, // Thêm thuộc tính success: true
         timeLeft: gameState.timeLeft,
         phase: gameState.phase,
-        balance: userBalance
+        balance: userBalance,
+        isLocked: isLocked
     });
 });
 
@@ -219,7 +222,8 @@ app.post('/api/login', async (req, res) => {
 
 app.get('/api/user/:username', (req, res) => {
     const user = users[req.params.username];
-    if (user) res.json({ success: true, user: { ...user, username: req.params.username } });
+    if (user && !user.isLocked) res.json({ success: true, user: { ...user, username: req.params.username } });
+    else if (user && user.isLocked) res.json({ success: false, message: "Tài khoản này đang bị khóa!" });
     else res.json({ success: false, message: "User not found" });
 });
 
@@ -230,7 +234,7 @@ app.post('/api/update-profile', async (req, res) => {
     try {
         let { username, fullName, phone, avatar } = req.body;
         const user = users[username];
-        if (!user) return res.json({ success: false, message: "Người dùng không tồn tại" });
+        if (!user || user.isLocked) return res.json({ success: false, message: "Tài khoản bị khóa hoặc không tồn tại" });
 
         // Validation cơ bản
         fullName = fullName?.trim();
@@ -256,7 +260,7 @@ app.post('/api/update-profile', async (req, res) => {
 app.post('/api/place-bet', async (req, res) => {
     const { username, side, amount } = req.body;
     const user = users[username];
-    if (!user || user.balance < amount) return res.json({ success: false, message: "Lỗi đặt cược" });
+    if (!user || user.isLocked || user.balance < amount) return res.json({ success: false, message: "Tài khoản bị khóa hoặc không đủ số dư" });
 
     const betId = Date.now();
     user.balance -= amount;
