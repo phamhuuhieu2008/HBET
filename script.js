@@ -152,6 +152,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             balance = res.user.balance;
             betHistory = res.user.betHistory || [];
             withdrawHistory = res.user.withdrawHistory || [];
+
+            // Khôi phục trạng thái cược đang chờ nếu có
+            const pendingBet = betHistory.find(b => b.result === 'Đang chờ');
+            if (pendingBet) {
+                selectSide(pendingBet.side); // Đánh dấu nút đã chọn
+                hasBet = true;
+                currentBetId = pendingBet.id;
+                sideBet = pendingBet.side;
+                amountBet = pendingBet.amount;
+                const sideEl = sideBet === 'left' ? 'placedBetXiu' : 'placedBetTai';
+                const el = document.getElementById(sideEl);
+                if (el) { el.textContent = `+${amountBet.toLocaleString()}đ`; el.classList.remove('hidden'); }
+            }
+
             initGame();
         }
     }
