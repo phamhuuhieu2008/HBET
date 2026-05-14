@@ -1,7 +1,6 @@
+# Dependency directories
 node_modules/
+
+# Local data files (Database)
+data/*.json
 .env
-*.json
-!package.json
-!package-lock.json
-public/uploads/
-.DS_Store
