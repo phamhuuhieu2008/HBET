@@ -375,7 +375,23 @@ async function refreshAdminData() {
 function showTransferInfo() {
     const amount = document.getElementById('depositAmount').value;
     if (!amount || amount < 10000) return showToast("Số tiền tối thiểu 10,000đ", "error");
+
+    // Cập nhật số tiền hiển thị trên giao diện
     document.getElementById('displayDepositAmount').textContent = parseInt(amount).toLocaleString() + "đ";
+
+    // Cấu hình mã QR động VietQR (Ngân hàng Bản Việt - VCCB)
+    const bankID = "VCCB";
+    const accountNo = "99ZP24249M42049701";
+    const template = "compact2"; // Mẫu QR gọn đẹp
+    const description = "99ZP24249M42049701"; // Nội dung chuyển khoản
+    const accountName = "PHAM HUU HIEU";
+
+    // Tạo link QR động chứa đầy đủ thông tin số tiền và nội dung
+    const qrUrl = `https://img.vietqr.io/image/${bankID}-${accountNo}-${template}.png?amount=${amount}&addInfo=${description}&accountName=${encodeURIComponent(accountName)}`;
+
+    // Thay thế ảnh tĩnh bằng QR động
+    document.getElementById('qrCodeImg').src = qrUrl;
+
     document.getElementById('depositStep1').classList.add('hidden');
     document.getElementById('depositStep2').classList.remove('hidden');
 }
