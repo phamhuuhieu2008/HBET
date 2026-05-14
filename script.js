@@ -39,7 +39,8 @@ async function fetchData(endpoint, options = {}) {
         });
 }
 
-function toggleAuth(isRegister) {
+function toggleAuth(e, isRegister) {
+    if (e && e.preventDefault) e.preventDefault();
     document.getElementById('loginForm').classList.toggle('hidden', isRegister);
     document.getElementById('registerForm').classList.toggle('hidden', !isRegister);
     document.getElementById('authTitle').textContent = isRegister ? "Tạo tài khoản mới miễn phí" : "Đăng nhập để bắt đầu trải nghiệm";
@@ -141,6 +142,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.key === 'Enter') {
             e.preventDefault();
             e.stopImmediatePropagation(); // Gia cố chặn mọi sự kiện khác
+        }
+    });
+
+    // Ngăn chặn Enter reload trang trên toàn bộ input
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+            e.preventDefault();
         }
     });
 
@@ -403,7 +411,8 @@ async function refreshAdminData(showMsg = true) {
     if (showMsg) showToast("🔄 Đã cập nhật dữ liệu mới nhất");
 }
 
-function showTransferInfo() {
+function showTransferInfo(e) {
+    if (e) e.preventDefault();
     const amount = document.getElementById('depositAmount').value;
     if (!amount || amount < 10000) return showToast("Số tiền tối thiểu 10,000đ", "error");
 
@@ -446,17 +455,23 @@ function previewAvatar(input) {
     }
 }
 
-async function confirmDeposit(btn) {
+async function confirmDeposit(e) {
+    if (e) e.preventDefault();
     const amount = document.getElementById('depositAmount').value;
     const code = document.getElementById('transferCode').textContent;
     const res = await fetchData('/api/deposit', { method: 'POST', body: { username: currentUser, amount, code } });
     if (res.success) {
         showToast(res.message);
+        // Chuyển về bước 1 cho lần sau
+        document.getElementById('depositStep1').classList.remove('hidden');
+        document.getElementById('depositStep2').classList.add('hidden');
+        document.getElementById('depositAmount').value = "";
         closeModal('depositModal');
     } else { showToast(res.message, "error"); }
 }
 
-async function saveProfile(btn) {
+async function saveProfile(e) {
+    if (e) e.preventDefault();
     const fullName = document.getElementById('profileFullName').value.trim();
     const phone = document.getElementById('profilePhone').value.trim();
     if (fullName.length < 2) return showToast("Họ tên quá ngắn!", "error");
@@ -465,7 +480,8 @@ async function saveProfile(btn) {
     if (res.success) { showToast("✅ Thành công!"); closeModal('profileModal'); }
 }
 
-async function handleWithdraw() {
+async function handleWithdraw(e) {
+    if (e) e.preventDefault();
     const amt = parseInt(document.getElementById('withdrawAmount').value);
     const bank = document.getElementById('withdrawBank').value;
     const num = document.getElementById('withdrawNumber').value;
@@ -514,23 +530,64 @@ function renderHistory() {
 async function renderAdminDepositList() {
     const d = await fetchData('/api/admin/data');
     if (!d || !d.success) return;
+
+    // Danh sách chờ duyệt
     const el = document.getElementById('adminDepositList');
-    el.innerHTML = d.requests && d.requests.length ? '' : '<p class="text-gray-500 text-xs italic">Trống</p>';
-    d.requests.forEach(r => {
+    const pending = d.deposits ? d.deposits.filter(r => r.status === 'Pending') : [];
+    el.innerHTML = pending.length ? '' : '<p class="text-gray-500 text-xs italic">Không có yêu cầu mới</p>';
+    pending.forEach(r => {
         const dv = document.createElement('div');
         dv.className = 'bg-black p-3 rounded-xl flex justify-between border border-red-900/30 text-xs';
-        dv.innerHTML = `<div>${r.user} - ${r.amount.toLocaleString()}đ</div><button onclick="approveDeposit('${r.id}')" class="text-green-400">Duyệt</button>`;
+        dv.innerHTML = `
+            <div>${r.user} - <span class="text-yellow-400">${r.amount.toLocaleString()}đ</span></div>
+            <div class="flex gap-2">
+                <button onclick="approveDeposit('${r.id}')" class="text-green-400 font-bold">Duyệt</button>
+                <button onclick="rejectDeposit('${r.id}')" class="text-red-500">Hủy</button>
+            </div>`;
         el.appendChild(dv);
     });
+
+    // Lịch sử đã xử lý
+    const hEl = document.getElementById('adminDepositHistory');
+    if (hEl) {
+        const history = d.deposits ? d.deposits.filter(r => r.status !== 'Pending') : [];
+        hEl.innerHTML = history.length ? '' : '<p class="text-gray-600 text-[10px] italic text-center">Chưa có lịch sử</p>';
+        history.slice(-10).reverse().forEach(r => {
+            const dv = document.createElement('div');
+            dv.className = 'bg-zinc-900/50 p-2 rounded-lg flex justify-between text-[10px] border border-white/5 opacity-60';
+            const statusColor = r.status === 'Success' ? 'text-green-500' : 'text-red-500';
+            dv.innerHTML = `<div>${r.user} - ${r.amount.toLocaleString()}đ</div><div class="${statusColor}">${r.status}</div>`;
+            hEl.appendChild(dv);
+        });
+    }
 }
 
 async function approveDeposit(id) {
     const res = await fetchData('/api/admin/action', { method: 'POST', body: { type: 'approveDeposit', reqId: id } });
     if (res.success) {
         showToast("✅ Đã duyệt nạp!");
-        refreshAdminData(false); // Làm mới toàn bộ (cả số dư user) mà không hiện toast lặp lại
+        refreshAdminData(false);
     }
 }
+
+async function rejectDeposit(id) {
+    if (!confirm("Bạn có chắc chắn muốn hủy yêu cầu nạp này?")) return;
+    const res = await fetchData('/api/admin/action', { method: 'POST', body: { type: 'rejectDeposit', reqId: id } });
+    if (res.success) {
+        showToast("❌ Đã hủy yêu cầu nạp");
+        refreshAdminData(false);
+    }
+}
+
+async function rejectWithdraw(id) {
+    if (!confirm("Bạn có chắc chắn muốn hủy và hoàn tiền cho yêu cầu này?")) return;
+    const res = await fetchData('/api/admin/action', { method: 'POST', body: { type: 'rejectWithdraw', reqId: id } });
+    if (res.success) {
+        showToast("❌ Đã hủy và hoàn tiền!");
+        refreshAdminData(false);
+    }
+}
+
 
 function setAdminResult(mode) {
     fetchData('/api/admin/action', { method: 'POST', body: { type: 'setResult', mode } })
@@ -545,9 +602,12 @@ function setAdminResult(mode) {
 async function renderAdminWithdrawList() {
     const d = await fetchData('/api/admin/data');
     if (!d || !d.success) return;
+
+    // Chờ duyệt
     const el = document.getElementById('adminWithdrawList');
-    el.innerHTML = d.withdrawals && d.withdrawals.length ? '' : '<p class="text-gray-500 text-xs italic">Trống</p>';
-    d.withdrawals.forEach(r => {
+    const pending = d.withdraws ? d.withdraws.filter(r => r.status !== 'Hoàn thành' && r.status !== 'Bị từ chối') : [];
+    el.innerHTML = pending.length ? '' : '<p class="text-gray-500 text-xs italic">Không có yêu cầu mới</p>';
+    pending.forEach(r => {
         const dv = document.createElement('div');
         dv.className = 'bg-black p-3 rounded-xl flex justify-between border border-blue-900/30 text-xs';
         const btnLabel = r.status === 'Đang xử lý' ? 'XÁC NHẬN' : 'HOÀN THÀNH';
@@ -556,11 +616,26 @@ async function renderAdminWithdrawList() {
                             <div class="font-bold text-blue-400">${r.user} - ${r.amount.toLocaleString()}đ</div>
                             <div class="text-[10px] text-gray-500">${r.bankName} | ${r.accountNumber}</div>
                         </div>
-                        <div class="flex gap-1">
+                        <div class="flex gap-2 items-center">
                             <button onclick="approveWithdraw('${r.id}')" class="text-green-400 font-bold">${btnLabel}</button>
+                            <button onclick="rejectWithdraw('${r.id}')" class="text-red-500 text-[10px]">Hủy</button>
                         </div>`;
         el.appendChild(dv);
     });
+
+    // Lịch sử rút
+    const hEl = document.getElementById('adminWithdrawHistory');
+    if (hEl) {
+        const history = d.withdraws ? d.withdraws.filter(r => r.status === 'Hoàn thành' || r.status === 'Bị từ chối') : [];
+        hEl.innerHTML = history.length ? '' : '<p class="text-gray-600 text-[10px] italic text-center">Chưa có lịch sử</p>';
+        history.slice(-10).reverse().forEach(r => {
+            const dv = document.createElement('div');
+            dv.className = 'bg-zinc-900/50 p-2 rounded-lg flex justify-between text-[10px] border border-white/5 opacity-60';
+            const sColor = r.status === 'Hoàn thành' ? 'text-green-500' : 'text-red-500';
+            dv.innerHTML = `<div>${r.user} - ${r.amount.toLocaleString()}đ</div><div class="${sColor}">${r.status}</div>`;
+            hEl.appendChild(dv);
+        });
+    }
 }
 
 async function approveWithdraw(id) {

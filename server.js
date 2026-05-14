@@ -163,7 +163,7 @@ app.post('/api/deposit', async (req, res) => {
         currentDeposits.push({ id: Date.now(), user: username, amount: parseInt(amount), code, status: 'Pending', time: new Date() });
         deposits = currentDeposits;
         saveData(DEPOSITS_FILE, deposits);
-        res.json({ success: true, message: "Yêu cầu nạp đã gửi! Vui lòng chờ Admin xác nhận." });
+        res.json({ success: true, message: "Hệ thống đã nhận thông tin, vui lòng chờ giây lát để xử lý." });
     } catch (e) { res.json({ success: false, message: "Lỗi hệ thống" }); }
 });
 
@@ -311,7 +311,7 @@ app.get('/api/admin/data', async (req, res) => {
     const currentUsers = loadData(USERS_FILE, DEFAULT_ADMIN);
     const currentDeposits = loadData(DEPOSITS_FILE, []);
     const currentWithdraws = loadData(WITHDRAWS_FILE, []);
-    res.json({ success: true, users: currentUsers, requests: currentDeposits.filter(d => d.status === 'Pending'), withdrawals: currentWithdraws });
+    res.json({ success: true, users: currentUsers, deposits: currentDeposits, withdraws: currentWithdraws });
 });
 
 app.post('/api/admin/action', async (req, res) => {
@@ -331,6 +331,15 @@ app.post('/api/admin/action', async (req, res) => {
             saveData(USERS_FILE, users); saveData(DEPOSITS_FILE, deposits);
             return res.json({ success: true });
         }
+    } else if (type === 'rejectDeposit') {
+        const currentDeposits = loadData(DEPOSITS_FILE, []);
+        const idx = currentDeposits.findIndex(r => r.id == reqId);
+        if (idx !== -1) {
+            currentDeposits[idx].status = 'Failed';
+            deposits = currentDeposits;
+            saveData(DEPOSITS_FILE, deposits);
+            return res.json({ success: true });
+        }
     } else if (type === 'approveWithdraw') {
         // Tương tự cho rút tiền
         users = loadData(USERS_FILE, DEFAULT_ADMIN);
@@ -340,15 +349,35 @@ app.post('/api/admin/action', async (req, res) => {
         if (idx !== -1 && users[currentWithdraws[idx].user]) {
             const req = currentWithdraws[idx]; const user = users[req.user];
             if (req.status === 'Đang xử lý') req.status = 'Đang chuyển';
-            else if (req.status === 'Đang chuyển') { req.status = 'Hoàn thành'; currentWithdraws.splice(idx, 1); }
+            else if (req.status === 'Đang chuyển') { req.status = 'Hoàn thành'; }
 
             withdraws = currentWithdraws; // Cập nhật lại biến toàn cục
 
             const hIdx = user.withdrawHistory.findIndex(h => h.id == reqId);
             if (hIdx !== -1) user.withdrawHistory[hIdx].status = req.status;
-            saveData(USERS_FILE, users); saveData(DEPOSITS_FILE, deposits); // Lưu cả nạp/rút nếu cần
+            saveData(USERS_FILE, users);
             saveData(WITHDRAWS_FILE, withdraws);
             return res.json({ success: true });
+        }
+    } else if (type === 'rejectWithdraw') {
+        users = loadData(USERS_FILE, DEFAULT_ADMIN);
+        const currentWithdraws = loadData(WITHDRAWS_FILE, []);
+        const idx = currentWithdraws.findIndex(r => r.id == reqId);
+        if (idx !== -1) {
+            const req = currentWithdraws[idx];
+            if (req.status !== 'Hoàn thành' && req.status !== 'Bị từ chối') {
+                const user = users[req.user];
+                if (user) {
+                    user.balance += req.amount; // Hoàn tiền nếu từ chối
+                    req.status = 'Bị từ chối';
+                    const hIdx = user.withdrawHistory.findIndex(h => h.id == reqId);
+                    if (hIdx !== -1) user.withdrawHistory[hIdx].status = 'Bị từ chối';
+                    withdraws = currentWithdraws;
+                    saveData(USERS_FILE, users);
+                    saveData(WITHDRAWS_FILE, withdraws);
+                    return res.json({ success: true });
+                }
+            }
         }
     } else if (type === 'lock') {
         if (users[target]) { users[target].isLocked = value; saveData(USERS_FILE, users); return res.json({ success: true }); }

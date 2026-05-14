@@ -28,8 +28,8 @@
                 <button type="button" id="loginBtn"
                     class="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-300 transition shadow-lg shadow-yellow-400/20">ĐĂNG
                     NHẬP</button>
-                <p class="text-center text-sm text-gray-500">Chưa có tài khoản? <a href="#" onclick="toggleAuth(true)"
-                        class="text-yellow-400">Đăng ký ngay</a></p>
+                <p class="text-center text-sm text-gray-500">Chưa có tài khoản? <a href="#"
+                        onclick="toggleAuth(event, true)" class="text-yellow-400">Đăng ký ngay</a></p>
             </div>
 
             <div id="registerForm" class="space-y-4 hidden">
@@ -42,8 +42,8 @@
                 <button type="button" id="registerBtn"
                     class="w-full bg-green-500 text-white font-bold py-4 rounded-xl hover:bg-green-400 transition shadow-lg shadow-green-500/20">ĐĂNG
                     KÝ TÀI KHOẢN</button>
-                <p class="text-center text-sm text-gray-500">Đã có tài khoản? <a href="#" onclick="toggleAuth(false)"
-                        class="text-yellow-400">Đăng nhập</a></p>
+                <p class="text-center text-sm text-gray-500">Đã có tài khoản? <a href="#"
+                        onclick="toggleAuth(event, false)" class="text-yellow-400">Đăng nhập</a></p>
             </div>
         </div>
     </div>
@@ -62,11 +62,11 @@
                         <span id="balance" class="font-bold">500,000</span>
                     </div>
                     <!-- Admin Button -->
-                    <button id="adminBtn" onclick="openModal('adminModal')"
+                    <button type="button" id="adminBtn" onclick="openModal('adminModal')"
                         class="hidden bg-red-600 p-2 rounded-lg text-white text-xs font-bold animate-pulse">
                         ADMIN
                     </button>
-                    <button onclick="handleLogout()" class="text-gray-300 hover:text-white transition">
+                    <button type="button" onclick="handleLogout()" class="text-gray-300 hover:text-white transition">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
@@ -76,15 +76,15 @@
         <div class="pt-24 px-4 pb-12">
             <!-- Nạp/Rút Buttons -->
             <div class="grid grid-cols-3 gap-2 mb-6 text-[10px]">
-                <button onclick="openModal('depositModal')"
+                <button type="button" onclick="openModal('depositModal')"
                     class="bg-gradient-to-b from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white font-bold py-2 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all active:scale-95 border border-emerald-400/20">
                     <i class="fa-solid fa-plus-circle"></i> NẠP TIỀN
                 </button>
-                <button onclick="openModal('withdrawModal')"
+                <button type="button" onclick="openModal('withdrawModal')"
                     class="bg-gradient-to-b from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 text-white font-bold py-2 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all active:scale-95 border border-blue-400/20">
                     <i class="fa-solid fa-money-bill-transfer"></i> RÚT TIỀN
                 </button>
-                <button onclick="openModal('historyModal')"
+                <button type="button" onclick="openModal('historyModal')"
                     class="bg-gradient-to-b from-zinc-700 to-zinc-900 hover:from-zinc-600 hover:to-zinc-800 text-white font-bold py-2 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all active:scale-95 border border-zinc-500/20">
                     <i class="fa-solid fa-clock-rotate-left"></i> LỊCH SỬ
                 </button>
@@ -230,7 +230,7 @@
                     <input type="number" id="depositAmount"
                         class="w-full bg-black border border-gray-700 rounded-xl p-4 text-xl font-bold text-yellow-400 mb-4 focus:border-yellow-400 outline-none"
                         placeholder="Ví dụ: 100000">
-                    <button onclick="showTransferInfo()"
+                    <button type="button" onclick="showTransferInfo(event)"
                         class="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-300 transition">TIẾP
                         TỤC</button>
                 </div>
@@ -260,19 +260,14 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-400">Nội dung:</span>
-<<<<<<< HEAD
                             <span id="transferCode" class="font-bold text-yellow-400">99ZP24249M42049701</span>
-                           
-=======
-                            <span id="transferCode" class="font-bold text-yellow-400">HIEUBET ...</span>
->>>>>>> 1e29ad0 (update code)
                         </div>
                     </div>
                     <p class="text-[10px] text-yellow-500 mt-4 italic text-center text-balance">
                         <i class="fa-solid fa-circle-info"></i> Sau khi chuyển khoản, bấm nút bên dưới. Hệ thống sẽ kiểm
                         tra tài khoản ngân hàng và cộng tiền tự động sau 3-5 giây.
                     </p>
-                    <button onclick="confirmDeposit(this)"
+                    <button type="button" onclick="confirmDeposit(event)"
                         class="w-full mt-2 bg-green-500 text-white font-bold py-4 rounded-xl hover:bg-green-400 transition flex items-center justify-center gap-2 border-b-4 border-green-700">XÁC
                         NHẬN ĐÃ CHUYỂN</button>
                 </div>
@@ -317,7 +312,7 @@
                         class="w-full bg-black border border-gray-700 rounded-xl p-3 text-xl font-bold text-blue-400 outline-none"
                         placeholder="Tối thiểu 50,000">
                 </div>
-                <button type="button" onclick="handleWithdraw()"
+                <button type="button" onclick="handleWithdraw(event)"
                     class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-500 transition shadow-lg">GỬI
                     LỆNH RÚT TIỀN</button>
             </div>
@@ -346,12 +341,16 @@
                     <div id="adminDepositList" class="space-y-2 mb-6">
                         <!-- Deposit requests injected here -->
                     </div>
+                    <p class="text-gray-500 text-[10px] mb-2 uppercase opacity-50">Lịch sử nạp (10 phiên gần nhất)</p>
+                    <div id="adminDepositHistory" class="space-y-1 mb-6 max-h-32 overflow-y-auto"></div>
 
                     <p class="text-gray-400 text-xs mb-3 uppercase font-bold text-blue-400">Duyệt rút tiền (Chờ xử lý)
                     </p>
                     <div id="adminWithdrawList" class="space-y-2 mb-6">
                         <!-- Withdraw requests injected here -->
                     </div>
+                    <p class="text-gray-500 text-[10px] mb-2 uppercase opacity-50">Lịch sử rút (10 phiên gần nhất)</p>
+                    <div id="adminWithdrawHistory" class="space-y-1 mb-6 max-h-32 overflow-y-auto"></div>
                 </div>
 
                 <div>
@@ -430,7 +429,7 @@
                     </div>
                 </div>
 
-                <button type="button" onclick="saveProfile(this)"
+                <button type="button" onclick="saveProfile(event)"
                     class="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-300 transition shadow-lg">LƯU
                     THAY ĐỔI</button>
             </div>
