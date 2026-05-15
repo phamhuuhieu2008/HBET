@@ -204,6 +204,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             betHistory = res.user.betHistory || [];
             withdrawHistory = res.user.withdrawHistory || [];
 
+            // Cập nhật giao diện ngay lập tức
+            document.getElementById('authContainer').classList.add('hidden');
+            document.getElementById('gameContainer').classList.remove('hidden');
+
             // Khôi phục trạng thái cược đang chờ nếu có
             const pendingBet = betHistory.find(b => b.result === 'Đang chờ');
             if (pendingBet) {
@@ -218,6 +222,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             initGame();
+        } else {
+            // Nếu session cũ không tồn tại trên server (do server bị reset dữ liệu)
+            localStorage.removeItem('sunwin_session');
+            document.getElementById('authContainer').classList.remove('hidden');
         }
     }
 

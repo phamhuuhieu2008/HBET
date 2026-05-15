@@ -20,7 +20,7 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const DEPOSITS_FILE = path.join(DATA_DIR, 'deposits.json');
 const WITHDRAWS_FILE = path.join(DATA_DIR, 'withdraws.json');
 
-if (!fsSync.existsSync(DATA_DIR)) fsSync.mkdirSync(DATA_DIR);
+if (!fsSync.existsSync(DATA_DIR)) fsSync.mkdirSync(DATA_DIR, { recursive: true });
 
 // --- TỰ ĐỘNG KHÔI PHỤC DỮ LIỆU CŨ (MIGRATION) ---
 const oldFiles = ['users.json', 'deposits.json', 'withdraws.json'];
